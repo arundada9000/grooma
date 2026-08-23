@@ -11,6 +11,7 @@ import {
 } from "next/font/google";
 import { getShopContext } from "@/lib/tenant";
 import { buildThemeStyle } from "@/lib/theme/theme-css";
+import { InlineScript } from "@/components/inline-script";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -91,10 +92,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       style={themeStyle}
       suppressHydrationWarning
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: schemeScript }} />
-      </head>
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <InlineScript html={schemeScript} />
+        {children}
+      </body>
     </html>
   );
 }

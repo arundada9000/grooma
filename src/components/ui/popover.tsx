@@ -1,9 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  cloneElement,
+  useEffect,
+  useRef,
+  useState,
+  type MouseEventHandler,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 import { cn } from "@/lib/cn";
 
 type Align = "start" | "center" | "end";
+
+type TriggerAttributes = {
+  onClick?: MouseEventHandler<HTMLButtonElement>;
+  "aria-expanded"?: boolean;
+  "aria-haspopup"?: "dialog";
+};
 
 const ALIGN_CLASSES: Record<Align, string> = {
   start: "left-0",
@@ -17,7 +31,8 @@ export function Popover({
   children,
   triggerLabel,
 }: {
-  trigger: ReactNode;
+  /** A single interactive element, typically Button or IconButton. */
+  trigger: ReactElement<TriggerAttributes>;
   align?: Align;
   children: ReactNode;
   /** Accessible name for the popover panel. */
@@ -50,17 +65,18 @@ export function Popover({
     };
   }, [open]);
 
+  const triggerWithProps = cloneElement(trigger, {
+    onClick(event) {
+      trigger.props.onClick?.(event);
+      setOpen((current) => !current);
+    },
+    "aria-expanded": open,
+    "aria-haspopup": "dialog",
+  });
+
   return (
     <div ref={rootRef} className="relative inline-flex">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        onClick={() => setOpen((current) => !current)}
-        className="focus-visible:outline-accent inline-flex focus-visible:outline-2 focus-visible:outline-offset-2"
-      >
-        {trigger}
-      </button>
+      {triggerWithProps}
       {open ? (
         <div
           role="dialog"
