@@ -4,7 +4,7 @@ Barber Appointment System
 
 Version: 1.0
 Date: 2026-08-23
-Source spec: `initial-idea.md`
+Source spec: `docs/initial-idea.md`
 Status tracker: `TRACKER.md` (updated after every work session)
 
 ---
