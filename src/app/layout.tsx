@@ -14,10 +14,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Barber Appointment System",
-    template: "%s | Barber Appointment System",
+    default: "Grooma",
+    template: "%s | Grooma",
   },
-  description: "Book appointments and manage a modern barber shop.",
+  description: "Your grooming, made simple. Book barber appointments in seconds.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
