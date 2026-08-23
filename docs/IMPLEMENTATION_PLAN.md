@@ -21,12 +21,12 @@ Design direction: Apple Human Interface Guidelines inspired interaction patterns
 
 ## 2. Scope Adjustments From the Original Spec
 
-| Original spec | This build | Reason |
-|---|---|---|
-| Multi-tenant SaaS with many live shops | One live shop, tenant-aware schema | Owner request. Add shops later without refactoring |
+| Original spec                            | This build                                                                          | Reason                                                                    |
+| ---------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Multi-tenant SaaS with many live shops   | One live shop, tenant-aware schema                                                  | Owner request. Add shops later without refactoring                        |
 | Slug based public routing `/shop/[slug]` | Root level public routes (`/`, `/book`) resolved against the single configured shop | Cleanest URLs for a single shop deployment. Upgrade path documented below |
-| Platform onboarding wizard | Deferred. New shop = new row plus environment variable | Onboard a second shop through data, not code |
-| Full notification suite | In-app center plus transactional email architecture | Spec section 35 allows staged rollout |
+| Platform onboarding wizard               | Deferred. New shop = new row plus environment variable                              | Onboard a second shop through data, not code                              |
+| Full notification suite                  | In-app center plus transactional email architecture                                 | Spec section 35 allows staged rollout                                     |
 
 ### Tenancy upgrade path (documented contract)
 
@@ -46,25 +46,25 @@ Adding a real second shop later requires only one of:
 
 Locked choices with rationale. Deviations require updating this document first.
 
-| Layer | Choice | Notes |
-|---|---|---|
-| Framework | Next.js 16, App Router, React 19 | Server Components by default |
-| Language | TypeScript, strict mode | Non-negotiable |
-| Styling | Tailwind CSS v4 with CSS custom property tokens | Semantic tokens only in components |
-| UI kit | shadcn/ui patterns on Radix primitives, Lucide icons | Restyled to our design system, never stock look |
-| Animation | Motion for React | Springs, shared layout, reduced-motion aware |
-| Database | PostgreSQL (Neon in prod, Docker locally) | |
-| ORM | Drizzle ORM + drizzle-kit migrations | Matches team experience |
-| Validation | Zod | Shared schemas for forms and server boundaries |
-| Forms | React Hook Form + @hookform/zod | |
-| Auth | Better Auth with Drizzle adapter, email and password | Roles: OWNER, BARBER. Extensible. Team has production WebAuthn experience with this stack if passkeys are wanted later |
-| Dates | date-fns + @date-fns/tz | Explicit timezone handling, default Asia/Kathmandu per shop setting |
-| Email | Resend behind a NotificationService abstraction | Providers pluggable |
-| PWA | Serwist | Reevaluate at Phase 11 if compatibility drifts |
-| Storage | URL-based image fields first, provider abstraction later | Cloudinary or S3 compatible in polish phase |
-| Testing | Vitest (unit, especially scheduling), Playwright (E2E) | |
-| Quality | ESLint, Prettier, GitHub Actions, pnpm | Lint, typecheck, test, build on every PR |
-| Deployment | Vercel + Neon | |
+| Layer      | Choice                                                   | Notes                                                                                                                  |
+| ---------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Framework  | Next.js 16, App Router, React 19                         | Server Components by default                                                                                           |
+| Language   | TypeScript, strict mode                                  | Non-negotiable                                                                                                         |
+| Styling    | Tailwind CSS v4 with CSS custom property tokens          | Semantic tokens only in components                                                                                     |
+| UI kit     | shadcn/ui patterns on Radix primitives, Lucide icons     | Restyled to our design system, never stock look                                                                        |
+| Animation  | Motion for React                                         | Springs, shared layout, reduced-motion aware                                                                           |
+| Database   | PostgreSQL (Neon in prod, Docker locally)                |                                                                                                                        |
+| ORM        | Drizzle ORM + drizzle-kit migrations                     | Matches team experience                                                                                                |
+| Validation | Zod                                                      | Shared schemas for forms and server boundaries                                                                         |
+| Forms      | React Hook Form + @hookform/zod                          |                                                                                                                        |
+| Auth       | Better Auth with Drizzle adapter, email and password     | Roles: OWNER, BARBER. Extensible. Team has production WebAuthn experience with this stack if passkeys are wanted later |
+| Dates      | date-fns + @date-fns/tz                                  | Explicit timezone handling, default Asia/Kathmandu per shop setting                                                    |
+| Email      | Resend behind a NotificationService abstraction          | Providers pluggable                                                                                                    |
+| PWA        | Serwist                                                  | Reevaluate at Phase 11 if compatibility drifts                                                                         |
+| Storage    | URL-based image fields first, provider abstraction later | Cloudinary or S3 compatible in polish phase                                                                            |
+| Testing    | Vitest (unit, especially scheduling), Playwright (E2E)   |                                                                                                                        |
+| Quality    | ESLint, Prettier, GitHub Actions, pnpm                   | Lint, typecheck, test, build on every PR                                                                               |
+| Deployment | Vercel + Neon                                            |                                                                                                                        |
 
 ---
 
@@ -338,12 +338,12 @@ Done when: CI green including E2E, Lighthouse performance and accessibility 95+ 
 
 ## 9. Testing Strategy
 
-| Level | Tool | Focus |
-|---|---|---|
-| Unit | Vitest | Scheduling engine, rules, money, tokens, timezone math |
-| Integration | Vitest + test database | Repositories, booking transaction, exclusivity |
-| E2E | Playwright | Five customer and admin journeys, cross-tenant guard |
-| Manual gates | Checklist | iOS Safari, Android Chrome, desktop, reduced motion, dark mode |
+| Level        | Tool                   | Focus                                                          |
+| ------------ | ---------------------- | -------------------------------------------------------------- |
+| Unit         | Vitest                 | Scheduling engine, rules, money, tokens, timezone math         |
+| Integration  | Vitest + test database | Repositories, booking transaction, exclusivity                 |
+| E2E          | Playwright             | Five customer and admin journeys, cross-tenant guard           |
+| Manual gates | Checklist              | iOS Safari, Android Chrome, desktop, reduced motion, dark mode |
 
 ---
 
@@ -364,14 +364,14 @@ Done when: CI green including E2E, Lighthouse performance and accessibility 95+ 
 
 ## 11. Risks and Mitigations
 
-| Risk | Mitigation |
-|---|---|
-| Race condition double booking | Exclusion constraint plus transactional recheck (AD-03) with tested behavior |
-| Timezone bugs around midnight | Zone-aware library only, dedicated tests, no string date math |
-| Serwist and Next 16 compatibility drift | Verify early in Phase 12 spike, fallback to minimal custom SW |
-| iOS Safari PWA limitations | Treat Android as full target, iOS gets graceful degradation and install guidance |
-| Theme system leaking raw colors into components | Lint rule and review gate, tokens only |
-| Over-engineering | Phase gates, ship vertical slices, spec section 90 mindset |
+| Risk                                            | Mitigation                                                                       |
+| ----------------------------------------------- | -------------------------------------------------------------------------------- |
+| Race condition double booking                   | Exclusion constraint plus transactional recheck (AD-03) with tested behavior     |
+| Timezone bugs around midnight                   | Zone-aware library only, dedicated tests, no string date math                    |
+| Serwist and Next 16 compatibility drift         | Verify early in Phase 12 spike, fallback to minimal custom SW                    |
+| iOS Safari PWA limitations                      | Treat Android as full target, iOS gets graceful degradation and install guidance |
+| Theme system leaking raw colors into components | Lint rule and review gate, tokens only                                           |
+| Over-engineering                                | Phase gates, ship vertical slices, spec section 90 mindset                       |
 
 ---
 
