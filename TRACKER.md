@@ -5,7 +5,7 @@ Plan reference: `docs/IMPLEMENTATION_PLAN.md`
 
 Project: Grooma (barber appointment system)
 Started: 2026-08-23
-Last updated: 2026-08-23 (phase 2 complete)
+Last updated: 2026-08-23 (phase 3 complete)
 
 ---
 
@@ -14,7 +14,7 @@ Last updated: 2026-08-23 (phase 2 complete)
 |                   |                                                                                           |
 | ----------------- | ----------------------------------------------------------------------------------------- |
 | Phase in progress | None                                                                                      |
-| Next up           | Phase 3: design system and iOS HIG foundation                                             |
+| Next up           | Phase 4: theme engine and presets                                                         |
 | Blocking items    | Preview deployment check waits until the repo is pushed to GitHub and connected to Vercel |
 
 ---
@@ -27,8 +27,8 @@ Status values: `not-started`, `in-progress`, `done`
 | --- | -------------------------------------- | ----------- | ----------------------------------------------------------------------- |
 | 0   | Repository and tooling foundation      | done        | CI runs on push once GitHub remote is added                             |
 | 1   | Database and tenancy core              | done        | Local Postgres 16 on this machine; compose file kept as portable option |
-| 2   | Authentication                         | done        | Better Auth 1.7, proxy.ts guard, owner bootstrap via seed                |
-| 3   | Design system and iOS HIG foundation   | not-started | Tokens, primitives, motion, haptics, sound                              |
+| 2   | Authentication                         | done        | Better Auth 1.7, proxy.ts guard, owner bootstrap via seed               |
+| 3   | Design system and iOS HIG foundation   | done        | Tokens, primitives, motion, haptics, sound; showcase at /style          |
 | 4   | Theme engine and presets               | not-started | Presets drive CSS variables from shop data                              |
 | 5   | Internationalization foundation        | not-started | en and ne locales, typed dictionaries, language toggle                  |
 | 6   | Scheduling engine                      | not-started | Pure module plus exhaustive Vitest suite                                |
@@ -84,17 +84,17 @@ Status values: `not-started`, `in-progress`, `done`
 
 ### Phase 3: Design system and iOS HIG foundation
 
-- [ ] Semantic token layer, light and dark
-- [ ] Geist Sans and Mono loading plus Devanagari companion face for Nepali
-- [ ] Button, IconButton, Card, InsetGroup
-- [ ] Form controls: Field, Input, Textarea, Select, Switch, SegmentedControl
-- [ ] Overlays: Sheet (bottom mobile), AlertDialog, Toast, Popover, Tooltip
-- [ ] Feedback: Badge, Avatar, Skeleton, EmptyState, Tabs
-- [ ] Motion primitives: springs, press scale, stagger
-- [ ] Haptics utility with preference gate
-- [ ] Sound utility (WebAudio synth) with mute preference
-- [ ] Safe area insets handling
-- [ ] Style showcase page for review including Devanagari samples
+- [x] Semantic token layer, light and dark
+- [x] Geist Sans and Mono loading plus Devanagari companion face for Nepali (Noto Sans Devanagari)
+- [x] Button, IconButton, Card, InsetGroup
+- [x] Form controls: Field, Input, Textarea, Select, Switch, SegmentedControl
+- [x] Overlays: Sheet (bottom mobile, dialog desktop), AlertDialog, Toast, Popover, Tooltip
+- [x] Feedback: Badge, Avatar, Skeleton, EmptyState, Tabs
+- [x] Motion primitives: springs, press scale, stagger
+- [x] Haptics utility with preference gate (Vibration API, on by default)
+- [x] Sound utility (WebAudio synth) with mute preference (off by default)
+- [x] Safe area insets handling (pt-safe, pb-safe, pl-safe, pr-safe utilities)
+- [x] Style showcase page for review including Devanagari samples (/style)
 
 ### Phase 4: Theme engine and presets
 
@@ -235,12 +235,29 @@ Status values: `not-started`, `in-progress`, `done`
 | AD-07 | iOS HIG interaction contract codified in design system                                | Owner priority. Consistency enforced at component level                                                            | 2026-08-23 |
 | AD-08 | Server boundary contract: validate, resolve tenant, authenticate, authorize, transact | Security by structure, spec sections 53 and 78                                                                     | 2026-08-23 |
 | AD-09 | Route locales with typed custom dictionaries for en and ne                            | Owner request. Crawlable localized URLs, compile-time key safety, no heavy dependency for two locales              | 2026-08-23 |
-| AD-10 | Better Auth owns identity tables; users.id is text, credentials live in accounts      | Matches library model exactly, avoids drift. Domain fields shopId and role injected via databaseHooks at create     | 2026-08-23 |
+| AD-10 | Better Auth owns identity tables; users.id is text, credentials live in accounts      | Matches library model exactly, avoids drift. Domain fields shopId and role injected via databaseHooks at create    | 2026-08-23 |
 | AD-11 | Edge proxy checks cookie presence only, real authorization server-side                | proxy.ts cannot query the database. requireUser/requireOwner enforce session and role on every admin page          | 2026-08-23 |
 
 ---
 
 ## Changelog
+
+### 2026-08-23 (session 6)
+
+- Phase 3 complete:
+  - Semantic token layer in globals.css: surfaces (background, card, inset, backdrop), labels, separator, accent, destructive, success, warning; light values on :root and dark overrides via .dark with a pre paint script syncing system preference
+  - @theme inline maps tokens to Tailwind utilities so Phase 4 presets can restyle by overriding variables only
+  - Motion tokens: spring and soft easings, fade/scale/slide/toast keyframes, stagger utility for lists up to 12 children, prefers-reduced-motion guard
+  - Safe area utilities pt-safe, pb-safe, pl-safe, pr-safe; viewport export with viewportFit cover and theme colors
+  - Noto Sans Devanagari loaded as companion face in the body font stack
+  - Primitives: Button (5 variants, 3 sizes, loading), IconButton, Card family, InsetGroup rows, Badge, Avatar, Skeleton, EmptyState
+  - Forms: Field, Input, Textarea, Select, iOS style Switch, SegmentedControl with arrow key support
+  - Overlays: Sheet (bottom sheet mobile, dialog desktop), AlertDialog, Toast provider with useToast, Popover, Tooltip; escape and focus restoration handled
+  - Tabs with roving arrow key focus; haptics utility over Vibration API gated by preference (default on); WebAudio sound synth gated by preference (default off)
+  - Preference store src/lib/preferences.ts with injectable storage covered by unit tests plus haptics pattern tests (18 tests total)
+  - Living showcase at /style covering tokens, typography with Devanagari samples, every primitive, motion replays and feedback toggles; home page links to it
+  - Sign-in form and admin sign out refit to Button, Card, Field, Input primitives
+  - All checks green: format, lint, typecheck, 18 tests passing, production build with /style prerendered
 
 ### 2026-08-23 (session 5)
 
