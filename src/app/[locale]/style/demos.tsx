@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -327,16 +327,20 @@ export function StaggerDemo() {
   );
 }
 
-export function FeedbackPrefsDemo() {
-  const [hapticsOn, setHapticsOn] = useState<boolean | null>(null);
-  const [soundOn, setSoundOn] = useState<boolean | null>(null);
+const emptySubscribe = () => () => {};
 
-  if (hapticsOn === null || soundOn === null) {
-    if (typeof window !== "undefined") {
-      setHapticsOn(loadHaptics());
-      setSoundOn(loadSound());
-    }
-  }
+/** Reads a persisted flag: server snapshot is the default, client snaps to storage after hydration. */
+function useStoredFlag(load: () => boolean, fallback: boolean): boolean {
+  return useSyncExternalStore(emptySubscribe, load, () => fallback);
+}
+
+export function FeedbackPrefsDemo() {
+  const storedHaptics = useStoredFlag(loadHaptics, true);
+  const storedSound = useStoredFlag(loadSound, false);
+  const [hapticsOverride, setHapticsOverride] = useState<boolean | null>(null);
+  const [soundOverride, setSoundOverride] = useState<boolean | null>(null);
+  const hapticsOn = hapticsOverride ?? storedHaptics;
+  const soundOn = soundOverride ?? storedSound;
 
   return (
     <div className="flex max-w-sm flex-col gap-3">
@@ -344,9 +348,9 @@ export function FeedbackPrefsDemo() {
         <span className="text-label text-[15px]">Haptic feedback</span>
         <Switch
           label="Haptic feedback"
-          checked={hapticsOn ?? true}
+          checked={hapticsOn}
           onCheckedChange={(next) => {
-            setHapticsOn(next);
+            setHapticsOverride(next);
             saveHaptics(next);
             if (next) {
               setTimeout(() => haptic("medium"), 50);
@@ -358,9 +362,9 @@ export function FeedbackPrefsDemo() {
         <span className="text-label text-[15px]">UI sounds</span>
         <Switch
           label="UI sounds"
-          checked={soundOn ?? false}
+          checked={soundOn}
           onCheckedChange={(next) => {
-            setSoundOn(next);
+            setSoundOverride(next);
             saveSound(next);
             if (next) {
               setTimeout(() => sound("toggle"), 50);

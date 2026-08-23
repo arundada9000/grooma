@@ -35,6 +35,16 @@ export const en = {
     appointmentsToday: "Appointments today",
     signOut: "Sign out",
   },
+  notFound: {
+    title: "This cut isn't on the menu.",
+    subtitle: "The page you're after slipped out with the clippings.",
+    action: "Back to the shop",
+  },
+  errorPage: {
+    title: "Something went wrong",
+    subtitle: "Our clippers hit a snag. Give it another go.",
+    retry: "Try again",
+  },
 };
 
 export type Dictionary = typeof en;

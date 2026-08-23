@@ -94,6 +94,7 @@ html.dark {
   --animate-scale-in: scale-in 220ms var(--ease-spring) both;
   --animate-slide-up: slide-up 320ms var(--ease-spring) both;
   --animate-toast-in: toast-in 280ms var(--ease-spring) both;
+  --animate-pole-slide: pole-slide 2.4s linear infinite;
 }
 
 h1,
@@ -141,6 +142,17 @@ h3 {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* One full stripe period of a 45deg gradient is 48 * sqrt(2), so the loop
+   is seamless. The oversized layer keeps the pole covered while drifting. */
+@keyframes pole-slide {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(67.88px);
   }
 }
 

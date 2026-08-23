@@ -34,4 +34,14 @@ export const ne: DeepPartial<Dictionary> = {
     appointmentsToday: "आजका अपोइन्टमेन्ट",
     signOut: "साइन आउट",
   },
+  notFound: {
+    title: "यो कट मेनुमा छैन।",
+    subtitle: "तपाईंले खोज्नुभएको पृष्ठ भेटिएन।",
+    action: "पसलमा फर्कनुहोस्",
+  },
+  errorPage: {
+    title: "केही गलत भयो",
+    subtitle: "हाम्रा क्लिपरमा अड्किएको छ। फेरि प्रयास गर्नुहोस्।",
+    retry: "फेरि प्रयास",
+  },
 };

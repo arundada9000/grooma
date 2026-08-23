@@ -244,6 +244,16 @@ Status values: `not-started`, `in-progress`, `done`
 
 ## Changelog
 
+### 2026-08-23 (session 9)
+
+- Barber themed error surfaces:
+  - BarberPole component: animated diagonal red/white/accent stripes drawn purely from theme tokens so it restyles with every preset; seamless loop via full period translation, frozen automatically by the reduced motion guard
+  - global-not-found.tsx (experimental.globalNotFound): full document 404 for unmatched URLs including invalid locale prefixes, carries its own styles and scheme script
+  - [locale] not-found and error boundaries reuse the same visual language; error boundary offers retry and shows the digest ref
+  - Copy added to dictionaries en and ne ("This cut isn't on the menu." / "यो कट मेनुमा छैन।")
+  - Fixed hydration mismatch in FeedbackPrefsDemo: stored haptics/sound flags now read through useSyncExternalStore instead of setState during render
+- Verified live: /en/nope, /ne/nope and /fr-FR/deep/path all return 404 with the custom page
+
 ### 2026-08-23 (session 8)
 
 - Fixed two runtime console errors on /style:
