@@ -93,7 +93,7 @@ async function main() {
           longitude: 83.4486,
         },
         social: {},
-        branding: { presetId: "classic-barbershop" },
+        branding: { presetId: "classic-barbershop", fontPairing: "oswald-inter" },
         homepage: {
           sections: [
             { type: "hero", enabled: true, content: {} },

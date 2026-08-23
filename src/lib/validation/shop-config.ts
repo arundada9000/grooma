@@ -20,6 +20,11 @@ export const THEME_PRESET_IDS = [
 export const themePresetIdSchema = z.enum(THEME_PRESET_IDS);
 export type ThemePresetId = (typeof THEME_PRESET_IDS)[number];
 
+export const FONT_PAIRING_IDS = ["geist", "oswald-inter", "playfair-inter"] as const;
+
+export const fontPairingIdSchema = z.enum(FONT_PAIRING_IDS);
+export type FontPairingId = (typeof FONT_PAIRING_IDS)[number];
+
 export const contactInfoSchema = z.object({
   phone: z.string().trim().min(3).max(32),
   email: z.email().max(255).optional(),
@@ -51,6 +56,7 @@ export type SocialLinks = z.infer<typeof socialLinksSchema>;
 
 export const brandingConfigSchema = z.object({
   presetId: themePresetIdSchema,
+  fontPairing: fontPairingIdSchema.optional(),
   logoUrl: z.url().max(500).optional(),
   faviconUrl: z.url().max(500).optional(),
   customTheme: z.record(z.string(), z.unknown()).optional(),
