@@ -5,7 +5,7 @@ Plan reference: `docs/IMPLEMENTATION_PLAN.md`
 
 Project: Grooma (barber appointment system)
 Started: 2026-08-23
-Last updated: 2026-08-23 (phase 1 complete)
+Last updated: 2026-08-23 (phase 2 complete)
 
 ---
 
@@ -14,7 +14,7 @@ Last updated: 2026-08-23 (phase 1 complete)
 |                   |                                                                                           |
 | ----------------- | ----------------------------------------------------------------------------------------- |
 | Phase in progress | None                                                                                      |
-| Next up           | Phase 2: authentication                                                                   |
+| Next up           | Phase 3: design system and iOS HIG foundation                                             |
 | Blocking items    | Preview deployment check waits until the repo is pushed to GitHub and connected to Vercel |
 
 ---
@@ -27,7 +27,7 @@ Status values: `not-started`, `in-progress`, `done`
 | --- | -------------------------------------- | ----------- | ----------------------------------------------------------------------- |
 | 0   | Repository and tooling foundation      | done        | CI runs on push once GitHub remote is added                             |
 | 1   | Database and tenancy core              | done        | Local Postgres 16 on this machine; compose file kept as portable option |
-| 2   | Authentication                         | not-started | Better Auth, roles, admin route protection                              |
+| 2   | Authentication                         | done        | Better Auth 1.7, proxy.ts guard, owner bootstrap via seed                |
 | 3   | Design system and iOS HIG foundation   | not-started | Tokens, primitives, motion, haptics, sound                              |
 | 4   | Theme engine and presets               | not-started | Presets drive CSS variables from shop data                              |
 | 5   | Internationalization foundation        | not-started | en and ne locales, typed dictionaries, language toggle                  |
@@ -75,12 +75,12 @@ Status values: `not-started`, `in-progress`, `done`
 
 ### Phase 2: Authentication
 
-- [ ] Better Auth with Drizzle adapter
-- [ ] OWNER and BARBER roles on users
-- [ ] Sign-in page matching design system
-- [ ] Session helpers and server guards
-- [ ] Middleware protecting `/admin`
-- [ ] Bootstrap owner account path
+- [x] Better Auth with Drizzle adapter (usePlural against users, accounts, sessions, verifications)
+- [x] OWNER and BARBER roles on users
+- [x] Sign-in page matching design system (interim HIG-flavored styling until Phase 3)
+- [x] Session helpers and server guards (getSession, requireUser, requireOwner)
+- [x] Middleware protecting `/admin` (Next 16 proxy.ts, cookie presence at edge, real authz server-side)
+- [x] Bootstrap owner account path (seed calls auth.api.signUpEmail then promotes role and shopId)
 
 ### Phase 3: Design system and iOS HIG foundation
 
@@ -235,10 +235,28 @@ Status values: `not-started`, `in-progress`, `done`
 | AD-07 | iOS HIG interaction contract codified in design system                                | Owner priority. Consistency enforced at component level                                                            | 2026-08-23 |
 | AD-08 | Server boundary contract: validate, resolve tenant, authenticate, authorize, transact | Security by structure, spec sections 53 and 78                                                                     | 2026-08-23 |
 | AD-09 | Route locales with typed custom dictionaries for en and ne                            | Owner request. Crawlable localized URLs, compile-time key safety, no heavy dependency for two locales              | 2026-08-23 |
+| AD-10 | Better Auth owns identity tables; users.id is text, credentials live in accounts      | Matches library model exactly, avoids drift. Domain fields shopId and role injected via databaseHooks at create     | 2026-08-23 |
+| AD-11 | Edge proxy checks cookie presence only, real authorization server-side                | proxy.ts cannot query the database. requireUser/requireOwner enforce session and role on every admin page          | 2026-08-23 |
 
 ---
 
 ## Changelog
+
+### 2026-08-23 (session 5)
+
+- Phase 2 complete:
+  - Installed better-auth 1.7.1; studied installed types plus Next 16 bundled docs (middleware convention renamed to proxy.ts)
+  - Schema: users converted to Better Auth model (text id, emailVerified, image, global unique email), added accounts (issuer, provider credentials), sessions, verifications tables; barbers.userId and notifications.userId became text FKs
+  - Regenerated migration baseline from scratch on a fresh database (dev data disposable); re-added the double-booking exclusion constraint as custom migration
+  - auth instance with drizzleAdapter usePlural, emailAndPassword, session cookieCache (5 min), nextCookies plugin
+  - databaseHooks.user.create.before injects shopId (resolved from DEFAULT_SHOP_SLUG) and default BARBER role at sign-up time
+  - Session helpers getSession, requireUser, requireOwner in src/lib/auth/session.ts behind server-only
+  - Route handler at /api/auth/[...all] via toNextJsHandler; src/proxy.ts guards /admin/:path* by cookie presence and forwards ?next
+  - Sign-in page and client form via better-auth/react, interim HIG-flavored styling; admin shell shows session info and today's appointment count scoped by shopId
+  - Seed bootstraps owner through auth.api.signUpEmail then promotes role OWNER, sets shopId, verifies email; wipes accounts, sessions, verifications before users
+  - Verified live on dev server: ok endpoint 200, wrong password 401, unauthenticated /admin 307 to sign-in, signed-in owner sees dashboard, sign-out clears session
+  - All checks green: format, lint, typecheck, 11 tests passing, production build registers Proxy
+- Environment note: C: drive hit 0 bytes free and broke Postgres writes (could not write init file). Cleared npm cache (30.5 GB), pip cache, old temp files to restore 30 GB
 
 ### 2026-08-23 (session 4)
 

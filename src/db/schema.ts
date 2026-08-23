@@ -78,21 +78,88 @@ export const shops = pgTable(
   (table) => [uniqueIndex("shops_slug_key").on(table.slug)],
 );
 
+/**
+ * Better Auth identity tables follow its expected model names
+ * (users, accounts, sessions, verifications via usePlural) and text ids.
+ * Domain fields shopId and role ride along as additionalFields.
+ */
 export const users = pgTable(
   "users",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: text("id").primaryKey(),
     shopId: uuid("shop_id")
       .notNull()
       .references(() => shops.id, { onDelete: "cascade" }),
-    email: varchar("email", { length: 255 }).notNull(),
     name: varchar("name", { length: 120 }).notNull(),
-    // Populated and verified by Better Auth in Phase 2.
-    passwordHash: text("password_hash"),
+    email: varchar("email", { length: 255 }).notNull(),
+    emailVerified: boolean("email_verified").notNull().default(false),
+    image: text("image"),
     role: userRoleEnum("role").notNull().default("BARBER"),
     ...timestamps,
   },
-  (table) => [uniqueIndex("users_shop_email_key").on(table.shopId, table.email)],
+  (table) => [
+    uniqueIndex("users_email_key").on(table.email),
+    index("users_shop_idx").on(table.shopId),
+  ],
+);
+
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    token: text("token").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("sessions_token_key").on(table.token),
+    index("sessions_user_idx").on(table.userId),
+  ],
+);
+
+/** Credential and OAuth providers store their secrets here, never on users. */
+export const accounts = pgTable(
+  "accounts",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** Provider namespace, e.g. "credential" for email and password. */
+    issuer: text("issuer").notNull(),
+    accountId: text("account_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
+    scope: text("scope"),
+    idToken: text("id_token"),
+    password: text("password"),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("accounts_issuer_account_id_key").on(table.issuer, table.accountId),
+    index("accounts_user_idx").on(table.userId),
+  ],
+);
+
+export const verifications = pgTable(
+  "verifications",
+  {
+    id: text("id").primaryKey(),
+    identifier: text("identifier").notNull(),
+    value: text("value").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("verifications_identifier_idx").on(table.identifier)],
 );
 
 export const services = pgTable(
@@ -122,7 +189,7 @@ export const barbers = pgTable(
     shopId: uuid("shop_id")
       .notNull()
       .references(() => shops.id, { onDelete: "cascade" }),
-    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
     name: varchar("name", { length: 160 }).notNull(),
     displayName: varchar("display_name", { length: 120 }).notNull(),
     bio: jsonb("bio").$type<LocalizedText>(),
@@ -278,7 +345,7 @@ export const notifications = pgTable(
       .notNull()
       .references(() => shops.id, { onDelete: "cascade" }),
     audience: notificationAudienceEnum("audience").notNull(),
-    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
     appointmentId: uuid("appointment_id").references(() => appointments.id, {
       onDelete: "set null",
     }),
@@ -309,6 +376,10 @@ export const emailLog = pgTable(
 
 export type Shop = typeof shops.$inferSelect;
 export type NewShop = typeof shops.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Session = typeof sessions.$inferSelect;
+export type Account = typeof accounts.$inferSelect;
 export type Service = typeof services.$inferSelect;
 export type NewService = typeof services.$inferInsert;
 export type Barber = typeof barbers.$inferSelect;

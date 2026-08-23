@@ -1,8 +1,10 @@
+import { eq } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import { randomUUID } from "node:crypto";
 import "@/db/env";
 import { db } from "@/db";
 import {
+  accounts,
   appointments,
   barberServices,
   barbers,
@@ -12,10 +14,13 @@ import {
   emailLog,
   notifications,
   services,
+  sessions,
   shops,
   users,
+  verifications,
   workingHours,
 } from "@/db/schema";
+import { auth } from "@/lib/auth/server";
 
 const KTM_OFFSET = "+05:45";
 const SHOP_SLUG = "demo-classic-barbershop";
@@ -47,8 +52,11 @@ async function main() {
 
   console.log("Seeding demo data...");
 
-  await db.transaction(async (tx) => {
-    // Dev seed resets all tenant data.
+  const shopId = await db.transaction(async (tx) => {
+    // Dev seed resets all tenant data. Auth tables go before users (FK order).
+    await tx.delete(accounts);
+    await tx.delete(sessions);
+    await tx.delete(verifications);
     await tx.delete(appointments);
     await tx.delete(notifications);
     await tx.delete(emailLog);
@@ -109,13 +117,6 @@ async function main() {
         },
       })
       .returning();
-
-    await tx.insert(users).values({
-      shopId: shop.id,
-      email: "owner@democlassic.test",
-      name: "Shop Owner",
-      role: "OWNER",
-    });
 
     const serviceRows = await tx
       .insert(services)
@@ -344,10 +345,40 @@ async function main() {
         lookupTokenHash: lookupTokenHash(),
       },
     ]);
+
+    return shop.id;
   });
+
+  await bootstrapOwner(shopId);
 
   console.log("Seed complete.");
   console.log(`Demo shop slug: ${SHOP_SLUG}`);
+  console.log("Owner login: owner@democlassic.test / GroomaDev123!");
+}
+
+/**
+ * The owner account is created through Better Auth so credentials land in the
+ * accounts table exactly like a real sign-up. additionalFields (shopId, role)
+ * are input:false, so they are promoted directly afterwards.
+ */
+async function bootstrapOwner(shopId: string) {
+  const email = "owner@democlassic.test";
+  const password = "GroomaDev123!";
+
+  const result = await auth.api.signUpEmail({
+    body: { email, password, name: "Shop Owner" },
+  });
+
+  if (!result?.user) {
+    throw new Error("Owner sign-up returned no user");
+  }
+
+  await db
+    .update(users)
+    .set({ shopId, role: "OWNER", emailVerified: true })
+    .where(eq(users.id, result.user.id));
+
+  console.log("Bootstrap owner created.");
 }
 
 main()
