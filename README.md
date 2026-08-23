@@ -1,4 +1,6 @@
-# Barber Appointment System
+# Grooma
+
+> Your grooming, made simple.
 
 A production-grade appointment booking and shop management platform for barber shops. Customers book services in seconds from their phone. Owners run the day from a focused admin dashboard. Built to serve one shop today with a tenant-aware core that scales to many shops tomorrow.
 
@@ -50,7 +52,9 @@ See `docs/IMPLEMENTATION_PLAN.md` for the full architecture and `TRACKER.md` for
 
 ## Getting started
 
-Prerequisites: Node.js 20+, pnpm 10, Docker (for local Postgres, Phase 1 onward).
+Prerequisites: Node.js 20+ and pnpm 10. Docker is needed for local Postgres from Phase 1 onward.
+
+This project uses pnpm exclusively. Do not run `npm install` or `yarn install`; it creates lockfile drift that CI will reject.
 
 ```bash
 pnpm install

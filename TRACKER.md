@@ -3,19 +3,19 @@
 Single source of truth for build progress. Updated at the end of every work session.
 Plan reference: `docs/IMPLEMENTATION_PLAN.md`
 
-Project: Barber Appointment System
+Project: Grooma (barber appointment system)
 Started: 2026-08-23
-Last updated: 2026-08-23 (planning complete)
+Last updated: 2026-08-23 (phase 0 complete, plan revised for Grooma branding and en/ne i18n)
 
 ---
 
 ## Current Status
 
-|                   |                                            |
-| ----------------- | ------------------------------------------ |
-| Phase in progress | None, ready to start Phase 0               |
-| Next up           | Phase 0: repository and tooling foundation |
-| Blocking items    | None                                       |
+|                   |                                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------- |
+| Phase in progress | None                                                                                                    |
+| Next up           | Phase 1: database and tenancy core                                                                      |
+| Blocking items    | None in code. Preview deployment check waits until the repo is pushed to GitHub and connected to Vercel |
 
 ---
 
@@ -23,23 +23,24 @@ Last updated: 2026-08-23 (planning complete)
 
 Status values: `not-started`, `in-progress`, `done`
 
-| #   | Phase                                  | Status      | Notes                                                 |
-| --- | -------------------------------------- | ----------- | ----------------------------------------------------- |
-| 0   | Repository and tooling foundation      | not-started | Scaffold, strict TS, Tailwind v4, CI, repo docs       |
-| 1   | Database and tenancy core              | not-started | Drizzle schema, seed, shop context, repositories      |
-| 2   | Authentication                         | not-started | Better Auth, roles, admin route protection            |
-| 3   | Design system and iOS HIG foundation   | not-started | Tokens, primitives, motion, haptics, sound            |
-| 4   | Theme engine and presets               | not-started | Presets drive CSS variables from shop data            |
-| 5   | Scheduling engine                      | not-started | Pure module plus exhaustive Vitest suite              |
-| 6   | Booking pipeline                       | not-started | Transactional actions, conflict recovery, rate limits |
-| 7   | Public customer experience             | not-started | Landing, services, barbers, booking flow, manage page |
-| 8   | Admin operations                       | not-started | Dashboard, calendar, appointment actions, customers   |
-| 9   | Shop configuration admin               | not-started | Services, barbers, schedules, breaks, closures, rules |
-| 10  | Theme and homepage customization admin | not-started | Theme editor, homepage section editor                 |
-| 11  | Notifications                          | not-started | In-app center, Resend email provider                  |
-| 12  | PWA                                    | not-started | Manifest, Serwist, offline shell, iOS meta            |
-| 13  | SEO, AEO, GEO                          | not-started | Metadata, JSON-LD, sitemap, robots                    |
-| 14  | Hardening, testing, performance polish | not-started | E2E suites, a11y audit, CWV                           |
+| #   | Phase                                  | Status      | Notes                                                  |
+| --- | -------------------------------------- | ----------- | ------------------------------------------------------ |
+| 0   | Repository and tooling foundation      | done        | CI runs on push once GitHub remote is added            |
+| 1   | Database and tenancy core              | not-started | Drizzle schema, seed, shop context, repositories       |
+| 2   | Authentication                         | not-started | Better Auth, roles, admin route protection             |
+| 3   | Design system and iOS HIG foundation   | not-started | Tokens, primitives, motion, haptics, sound             |
+| 4   | Theme engine and presets               | not-started | Presets drive CSS variables from shop data             |
+| 5   | Internationalization foundation        | not-started | en and ne locales, typed dictionaries, language toggle |
+| 6   | Scheduling engine                      | not-started | Pure module plus exhaustive Vitest suite               |
+| 7   | Booking pipeline                       | not-started | Transactional actions, conflict recovery, rate limits  |
+| 8   | Public customer experience             | not-started | Landing, services, barbers, booking flow, manage page  |
+| 9   | Admin operations                       | not-started | Dashboard, calendar, appointment actions, customers    |
+| 10  | Shop configuration admin               | not-started | Services, barbers, schedules, breaks, closures, rules  |
+| 11  | Theme and homepage customization admin | not-started | Theme editor, homepage section editor                  |
+| 12  | Notifications                          | not-started | In-app center, Resend email provider                   |
+| 13  | PWA                                    | not-started | Manifest, Serwist, offline shell, iOS meta             |
+| 14  | SEO, AEO, GEO                          | not-started | Metadata, JSON-LD, hreflang, sitemap, robots           |
+| 15  | Hardening, testing, performance polish | not-started | E2E suites, a11y audit, CWV                            |
 
 ---
 
@@ -47,16 +48,16 @@ Status values: `not-started`, `in-progress`, `done`
 
 ### Phase 0: Repository and tooling foundation
 
-- [ ] Git init with main branch and commit convention
-- [ ] pnpm Next.js 16 + React 19 + TypeScript strict scaffold
-- [ ] Tailwind CSS v4 wired through PostCSS or the Next plugin
-- [ ] ESLint and Prettier configured and passing
-- [ ] Editor settings and recommended extensions
-- [ ] `.env.example` with documented variables
-- [ ] README with setup instructions
-- [ ] LICENSE, CONTRIBUTING, CODE OF CONDUCT
-- [ ] Issue and pull request templates
-- [ ] GitHub Actions CI: lint, typecheck, test, build
+- [x] Git init with main branch and commit convention
+- [x] pnpm Next.js 16 + React 19 + TypeScript strict scaffold
+- [x] Tailwind CSS v4 wired through PostCSS or the Next plugin
+- [x] ESLint and Prettier configured and passing
+- [x] Editor settings and recommended extensions
+- [x] `.env.example` with documented variables
+- [x] README with setup instructions
+- [x] LICENSE, CONTRIBUTING, CODE OF CONDUCT
+- [x] Issue and pull request templates
+- [x] GitHub Actions CI: lint, typecheck, test, build
 - [ ] Verify preview deployment works
 
 ### Phase 1: Database and tenancy core
@@ -70,7 +71,7 @@ Status values: `not-started`, `in-progress`, `done`
 - [ ] Seed script: demo shop, services, three barbers, schedules, sample appointments
 - [ ] `getShopContext()` resolution from environment slug
 - [ ] Shop-scoped repository layer skeleton
-- [ ] Zod schemas for shop config JSONB shapes
+- [ ] Zod schemas for shop config JSONB shapes including LocalizedText
 
 ### Phase 2: Authentication
 
@@ -84,7 +85,7 @@ Status values: `not-started`, `in-progress`, `done`
 ### Phase 3: Design system and iOS HIG foundation
 
 - [ ] Semantic token layer, light and dark
-- [ ] Geist Sans and Mono loading
+- [ ] Geist Sans and Mono loading plus Devanagari companion face for Nepali
 - [ ] Button, IconButton, Card, InsetGroup
 - [ ] Form controls: Field, Input, Textarea, Select, Switch, SegmentedControl
 - [ ] Overlays: Sheet (bottom mobile), AlertDialog, Toast, Popover, Tooltip
@@ -93,7 +94,7 @@ Status values: `not-started`, `in-progress`, `done`
 - [ ] Haptics utility with preference gate
 - [ ] Sound utility (WebAudio synth) with mute preference
 - [ ] Safe area insets handling
-- [ ] Style showcase page for review
+- [ ] Style showcase page for review including Devanagari samples
 
 ### Phase 4: Theme engine and presets
 
@@ -104,7 +105,21 @@ Status values: `not-started`, `in-progress`, `done`
 - [ ] Contrast validation helper
 - [ ] Preset switching verified across public surface
 
-### Phase 5: Scheduling engine
+### Phase 5: Internationalization foundation
+
+- [ ] Locale types and supported locale list (`en` default, `ne`)
+- [ ] Typed dictionaries: `src/i18n/dictionaries/en.ts` base and `ne.ts`
+- [ ] Compile-time key checking against en base, fallback chain ne to en
+- [ ] Middleware locale negotiation: cookie, Accept-Language, default
+- [ ] `[locale]` route segment structure with root redirects
+- [ ] Server helper for dictionary access in Server Components
+- [ ] Client provider for dictionary access in Client Components
+- [ ] Language switcher preserving current path, persisted via cookie
+- [ ] Localized date, time, number, currency formatting helpers
+- [ ] hreflang alternates metadata helper
+- [ ] Verify both locales render Devanagari typography correctly
+
+### Phase 6: Scheduling engine
 
 - [ ] types.ts, interval.ts math
 - [ ] hours.ts expansion with zone awareness
@@ -114,7 +129,7 @@ Status values: `not-started`, `in-progress`, `done`
 - [ ] Vitest matrix covering spec section 74 cases
 - [ ] Midnight boundary and DST-safe tests
 
-### Phase 6: Booking pipeline
+### Phase 7: Booking pipeline
 
 - [ ] getAvailability server action
 - [ ] createBooking transaction with recheck and constraint mapping
@@ -124,7 +139,7 @@ Status values: `not-started`, `in-progress`, `done`
 - [ ] Conflict result codes driving recovery UX
 - [ ] Concurrency test proving single winner
 
-### Phase 7: Public customer experience
+### Phase 8: Public customer experience
 
 - [ ] Homepage sections rendered from shop.homepage
 - [ ] Services page, Barbers page
@@ -135,17 +150,19 @@ Status values: `not-started`, `in-progress`, `done`
 - [ ] Cancel and reschedule flows with deadline messaging
 - [ ] Add to calendar (.ics) download
 - [ ] Book again shortcut
+- [ ] Every customer-facing string flows through dictionaries, en and ne verified
 - [ ] Loading, empty, error, offline states styled
 
-### Phase 8: Admin operations
+### Phase 9: Admin operations
 
 - [ ] Dashboard: today list, next up, revenue estimate, warnings
 - [ ] Calendar: today, day timeline, week, list views
 - [ ] Appointment actions: confirm, complete, cancel, no-show, reschedule, notes
 - [ ] Customers list with history drawer
 - [ ] Mobile-friendly admin navigation
+- [ ] Admin strings routed through dictionaries, English first
 
-### Phase 9: Shop configuration admin
+### Phase 10: Shop configuration admin
 
 - [ ] Services manager CRUD with reorder
 - [ ] Barbers manager with service assignment
@@ -154,23 +171,26 @@ Status values: `not-started`, `in-progress`, `done`
 - [ ] Closures manager: full day and partial
 - [ ] Booking rules form
 - [ ] General, contact, location settings forms
+- [ ] LocalizedText editing support (en required, ne optional)
 
-### Phase 10: Theme and homepage customization admin
+### Phase 11: Theme and homepage customization admin
 
 - [ ] Preset picker with live preview
 - [ ] Custom theme builder: colors, fonts, radius, style
 - [ ] Contrast validation in builder
 - [ ] Homepage section editor: enable, reorder, content, images
+- [ ] Per-locale homepage section content
 
-### Phase 11: Notifications
+### Phase 12: Notifications
 
 - [ ] NotificationService abstraction with provider registry
 - [ ] In-app notification center, unread badge, deep links, mark read
 - [ ] Resend email provider with branded templates
 - [ ] Lifecycle triggers: booked, confirmed, cancelled, rescheduled
 - [ ] Admin notifications on new booking and cancellations
+- [ ] Template locale resolution per recipient, shop default as fallback
 
-### Phase 12: PWA
+### Phase 13: PWA
 
 - [ ] Web manifest with maskable icons and shortcuts
 - [ ] Serwist service worker and offline shell
@@ -179,17 +199,18 @@ Status values: `not-started`, `in-progress`, `done`
 - [ ] iOS Apple touch icon, standalone meta, safe areas
 - [ ] Theme color synced from shop branding
 
-### Phase 13: SEO, AEO, GEO
+### Phase 14: SEO, AEO, GEO
 
 - [ ] Per-shop metadata generation
 - [ ] Open Graph and Twitter cards
-- [ ] Canonical URLs, sitemap.ts, robots.ts
+- [ ] Canonical URLs, sitemap.ts covering both locales, robots.ts
+- [ ] hreflang alternates for en and ne
 - [ ] JSON-LD: HairSalon or LocalBusiness, Service, Person, BreadcrumbList, FAQPage
-- [ ] FAQ answer content support
+- [ ] FAQ answer content support in both languages
 
-### Phase 14: Hardening, testing, performance polish
+### Phase 15: Hardening, testing, performance polish
 
-- [ ] Playwright: booking journey, reschedule, cancel, admin lifecycle, theme change, tenant guard
+- [ ] Playwright: booking journey, reschedule, cancel, admin lifecycle, theme change, language switch, tenant guard
 - [ ] Accessibility audit to WCAG 2.2 AA targets
 - [ ] Keyboard sweep and focus management pass
 - [ ] Reduced motion verification
@@ -213,14 +234,34 @@ Status values: `not-started`, `in-progress`, `done`
 | AD-06 | Guest-first booking with hashed lookup tokens                                         | No forced accounts, secure access                                                                                  | 2026-08-23 |
 | AD-07 | iOS HIG interaction contract codified in design system                                | Owner priority. Consistency enforced at component level                                                            | 2026-08-23 |
 | AD-08 | Server boundary contract: validate, resolve tenant, authenticate, authorize, transact | Security by structure, spec sections 53 and 78                                                                     | 2026-08-23 |
+| AD-09 | Route locales with typed custom dictionaries for en and ne                            | Owner request. Crawlable localized URLs, compile-time key safety, no heavy dependency for two locales              | 2026-08-23 |
 
 ---
 
 ## Changelog
 
-### 2026-08-23
+### 2026-08-23 (session 3)
 
-- Read and analyzed `initial-idea.md` full spec and developer profile
-- Created `docs/IMPLEMENTATION_PLAN.md`
-- Created this tracker
+- Product named Grooma with tagline "Your grooming, made simple." applied to package metadata, README, and app metadata
+- Planned internationalization: en and ne locales, added AD-09, inserted Phase 5, renumbered phases 5 through 14 to 6 through 15
+- Added LocalizedText jsonb pattern to data model for shop-authored content
+- Strengthened pnpm-only policy in README and CONTRIBUTING
+- Removed unused template SVG assets and replaced boilerplate home page with interim Grooma placeholder
+- Tightened .gitignore: agent/editor local dirs, log files, tool caches
+- Verified lint, typecheck, tests, production build after changes
+
+### 2026-08-23 (session 2)
+
+- Read and analyzed `docs/initial-idea.md` full spec and developer profile
+- Created `docs/IMPLEMENTATION_PLAN.md` and this tracker
 - Scope adjusted to single live shop with tenant-aware core per owner request
+- Phase 0 complete:
+  - Scaffolded Next.js 16.3.2 with React 19, TypeScript strict, Tailwind v4, src dir, app router
+  - Added clsx and tailwind-merge behind a tested `cn()` utility
+  - Configured Prettier with Tailwind class sorting, integrated with ESLint
+  - Added Vitest (config as .mts to load as ESM) with cn unit tests
+  - Added README, proprietary LICENSE, CONTRIBUTING, CODE OF CONDUCT
+  - Added GitHub issue forms, PR template, and CI workflow (lint, format check, typecheck, test, build)
+  - Added .gitattributes enforcing LF, renamed default branch to main
+  - Moved spec doc to docs/initial-idea.md and updated plan reference
+  - Verified: lint, typecheck, tests (4 passing), production build all green

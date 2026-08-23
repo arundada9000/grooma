@@ -11,9 +11,13 @@ Status tracker: `TRACKER.md` (updated after every work session)
 
 ## 1. Summary
 
-Build a production-quality barber appointment and shop management application following the master spec in `initial-idea.md`.
+Build Grooma, a production-quality barber appointment and shop management platform following the master spec in `docs/initial-idea.md`.
+
+Platform identity: the product name is **Grooma**, tagline **Your grooming, made simple.** Grooma is platform-level branding used in docs, admin chrome, package metadata, and install experiences. Customer-facing pages lead with the shop's own brand from the database; Grooma never replaces a shop's identity.
 
 Deployment model for this build: single shop in operation, with the data model and data access layer fully shop-scoped from day one so a second shop can be added later without rewriting business logic.
+
+Languages: English (`en`) and Nepali (`ne`) with an easy language toggle. Locale support is planned as a first-class foundation (Phase 5) before customer-facing surfaces are built.
 
 Design direction: Apple Human Interface Guidelines inspired interaction patterns delivered on the web. Clarity, deference, depth, large titles, grouped lists, bottom sheets, spring motion, press feedback, haptics, and restrained sound cues.
 
@@ -60,7 +64,8 @@ Locked choices with rationale. Deviations require updating this document first.
 | Auth       | Better Auth with Drizzle adapter, email and password     | Roles: OWNER, BARBER. Extensible. Team has production WebAuthn experience with this stack if passkeys are wanted later |
 | Dates      | date-fns + @date-fns/tz                                  | Explicit timezone handling, default Asia/Kathmandu per shop setting                                                    |
 | Email      | Resend behind a NotificationService abstraction          | Providers pluggable                                                                                                    |
-| PWA        | Serwist                                                  | Reevaluate at Phase 11 if compatibility drifts                                                                         |
+| i18n       | Typed JSON dictionaries, route locales, custom helpers   | en and ne. Two locales do not justify a framework. Escape hatch: next-intl                                             |
+| PWA        | Serwist                                                  | Reevaluate at Phase 13 if compatibility drifts                                                                         |
 | Storage    | URL-based image fields first, provider abstraction later | Cloudinary or S3 compatible in polish phase                                                                            |
 | Testing    | Vitest (unit, especially scheduling), Playwright (E2E)   |                                                                                                                        |
 | Quality    | ESLint, Prettier, GitHub Actions, pnpm                   | Lint, typecheck, test, build on every PR                                                                               |
@@ -122,11 +127,34 @@ The design system enforces these patterns so screens stay consistent:
 
 Every mutation follows: validate input with Zod, resolve shop context, authenticate where required, authorize role, execute in transaction, return a serializable result object. Client never receives raw database rows.
 
+### AD-09: Internationalization
+
+Languages: `en` (default) and `ne`. Approach:
+
+- Route based locales under a `[locale]` segment (`/en/book`, `/ne/book`) so both languages are crawlable with clean hreflang alternates. Root paths redirect via middleware.
+- Locale negotiation order: explicit user choice cookie, then Accept-Language header, then shop default (en).
+- Typed dictionary modules per locale in `src/i18n/dictionaries`. Keys are type-checked against the en base so a missing Nepali string is a compile error. Fallback chain: requested locale, then en, then key name.
+- Server Components receive dictionaries through server helpers; Client Components through a lightweight context provider. No runtime translation dependency.
+- Shop-authored content uses a `LocalizedText` jsonb shape (`{ "en": "...", "ne": "..." }`) rendered with fallback to en when a Nepali string is absent.
+- Formatting (dates, times, numbers, currency) follows the shop locale plus display locale using date-fns locales.
+- Typography loads a Devanagari companion face alongside Geist; line-height and tracking tokens are verified for Devanagari rendering.
+- Admin ships English first but all strings already flow through dictionaries, so adding admin Nepali later is content work, not refactoring.
+
+If requirements grow beyond two locales or need ICU plurals, migrate to next-intl behind the same dictionary interface. The seam is designed for that swap.
+
 ---
 
 ## 5. Data Model Outline
 
 Operational entities are relational. Shop appearance and content live in typed JSONB columns on `shops` to keep iteration cheap, promoted to tables later only if truly needed.
+
+Shop-authored display strings (service names and descriptions, barber bios, homepage content, testimonials, FAQs) use a `LocalizedText` jsonb shape:
+
+```json
+{ "en": "Haircut", "ne": "कपाल काट्ने" }
+```
+
+Rendering falls back to `en` when the active locale string is missing. Zod schemas enforce `en` as required.
 
 ```text
 shops              id, slug, name, short_name, tagline, description,
@@ -223,11 +251,14 @@ src/
 │   └── admin/               tables, timeline, editors
 ├── lib/
 │   ├── scheduling/          pure engine
+│   ├── i18n/                locale types, negotiation, formatting helpers
 │   ├── notifications/       NotificationService + providers
 │   ├── auth/                better-auth config, guards
 │   ├── tenant.ts            shop context resolution
 │   ├── theme/               presets, token generation
 │   └── utils/               cn, money, phone, haptics, sound
+├── i18n/
+│   └── dictionaries/        en.ts, ne.ts typed dictionaries
 ├── db/
 │   ├── schema.ts
 │   ├── index.ts
@@ -264,9 +295,9 @@ Done when: unauthenticated `/admin` access redirects, signed-in owner lands on a
 
 ### Phase 3: Design system and iOS HIG foundation
 
-Token layer (light/dark), Geist font loading, base primitives: Button, IconButton, Card, InsetGroup, Field, Input, Textarea, Select, Switch, SegmentedControl, Badge, Avatar, Sheet (bottom on mobile, dialog on desktop), AlertDialog, Toast, Skeleton, EmptyState, Tabs, Tooltip, Popover. Motion primitives (springs, press scale, stagger), haptics and sound utilities with preference toggles, safe-area handling.
+Token layer (light/dark), Geist font loading plus a Devanagari companion face for Nepali (Noto Sans Devanagari or Mukta), base primitives: Button, IconButton, Card, InsetGroup, Field, Input, Textarea, Select, Switch, SegmentedControl, Badge, Avatar, Sheet (bottom on mobile, dialog on desktop), AlertDialog, Toast, Skeleton, EmptyState, Tabs, Tooltip, Popover. Motion primitives (springs, press scale, stagger), haptics and sound utilities with preference toggles, safe-area handling.
 
-Done when: a living style page showcases every primitive in light and dark, keyboard and screen reader clean.
+Done when: a living style page showcases every primitive in light and dark including Devanagari samples, keyboard and screen reader clean.
 
 ### Phase 4: Theme engine and presets
 
@@ -274,63 +305,69 @@ Preset definitions (Classic Barbershop, Midnight, Minimal, Copper, Emerald, Ocea
 
 Done when: changing the seeded shop's preset visibly restyles the whole public surface, no component hex values.
 
-### Phase 5: Scheduling engine
+### Phase 5: Internationalization foundation
+
+Route based locales `/[locale]` with `en` and `ne`, middleware for locale negotiation (cookie, then Accept-Language, default en) and root redirects. Typed dictionaries in `src/i18n/dictionaries` with compile-time key safety and an en fallback chain. Locale helpers for server and client components, language switcher that preserves the current path, localized date, time, number, and currency formatting via shop locale settings, `hreflang` alternate metadata helper.
+
+Done when: switching language flips every rendered string of the interim pages, persists across navigation, and both locales render correct Devanagari typography.
+
+### Phase 6: Scheduling engine
 
 Full `src/lib/scheduling` implementation plus exhaustive Vitest suite per section 6. Pure code, no UI.
 
 Done when: every spec section 74 case passes, coverage on the package high, edge cases documented.
 
-### Phase 6: Booking pipeline
+### Phase 7: Booking pipeline
 
 Server actions: `getAvailability`, `createBooking` (transactional, AD-03), `cancelByCustomer`, `rescheduleByCustomer`, `lookupAppointment`. Rate limiting on public endpoints, conflict recovery result codes, lookup token issuance.
 
 Done when: concurrent create test proves single winner; conflict path returns friendly structured error.
 
-### Phase 7: Public customer experience
+### Phase 8: Public customer experience
 
-Landing page composed from shop.homepage sections, services page, barbers page, contact block, opening hours, booking flow (Service, Barber or Any, Date, Time, Details, Review, Confirmation) as a full-screen mobile sheet with progress header, appointment manage page (view, cancel, reschedule, add to calendar .ics download, call, directions), book again shortcut.
+Landing page composed from shop.homepage sections, services page, barbers page, contact block, opening hours, booking flow (Service, Barber or Any, Date, Time, Details, Review, Confirmation) as a full-screen mobile sheet with progress header, appointment manage page (view, cancel, reschedule, add to calendar .ics download, call, directions), book again shortcut. Every customer-facing string flows through the i18n dictionary layer so en and ne work everywhere.
 
-Done when: a guest can complete a real booking on a phone viewport end to end, all states styled (loading, empty, error, conflict recovery).
+Done when: a guest can complete a real booking on a phone viewport end to end in either language, all states styled (loading, empty, error, conflict recovery).
 
-### Phase 8: Admin operations
+### Phase 9: Admin operations
 
-Dashboard (today, next up, revenue estimate, warnings), calendar views (today, day timeline, week, list), appointment management (confirm, complete, cancel, no-show, reschedule, notes), customers list with history drawer.
+Dashboard (today, next up, revenue estimate, warnings), calendar views (today, day timeline, week, list), appointment management (confirm, complete, cancel, no-show, reschedule, notes), customers list with history drawer. Admin ships English first with strings already routed through dictionaries so Nepali can follow without refactoring.
 
 Done when: owner can run a real day of bookings from the admin alone.
 
-### Phase 9: Shop configuration admin
+### Phase 10: Shop configuration admin
 
-Services manager (CRUD, reorder, duration, buffer, price, image), barbers manager plus barber-service assignment, schedule editors (shop and barber level, multi-interval), break and closure managers, booking rules form, general settings, contact and location forms.
+Services manager (CRUD, reorder, duration, buffer, price, image), barbers manager plus barber-service assignment, schedule editors (shop and barber level, multi-interval), break and closure managers, booking rules form, general settings, contact and location forms. Localized content fields use the `LocalizedText` pattern (en required, ne optional with fallback).
 
-Done when: every value rendered publicly is editable here without code.
+Done when: every value rendered publicly is editable here without code, in one or both languages.
 
-### Phase 10: Theme and homepage customization admin
+### Phase 11: Theme and homepage customization admin
 
-Theme editor (preset picker plus custom color and font builder with live preview and contrast checks), homepage section editor (enable, reorder, edit content, pick images).
+Theme editor (preset picker plus custom color and font builder with live preview and contrast checks), homepage section editor (enable, reorder, edit content, pick images). Homepage section content supports per-locale text.
 
 Done when: two shops with different presets and section orders render correctly from data alone.
 
-### Phase 11: Notifications
+### Phase 12: Notifications
 
-NotificationService abstraction, in-app center with unread badge, deep links, mark read; Resend email provider with branded templates for booking, confirmation, cancellation, reschedule; admin notification triggers.
+NotificationService abstraction, in-app center with unread badge, deep links, mark read; Resend email provider with branded templates for booking, confirmation, cancellation, reschedule; admin notification triggers. Email templates resolve locale per recipient where known, otherwise the shop default locale.
 
 Done when: lifecycle events produce both in-app entries and emails in dev.
 
-### Phase 12: PWA
+### Phase 13: PWA
 
 Manifest with maskable icons, Serwist service worker, offline shell and messaging, install prompt guidance for Android, Apple touch icon and standalone meta for iOS, shortcuts (Book, My Appointment), theme color sync from shop branding.
 
 Done when: Lighthouse PWA passes on Android Chrome, iOS standalone launch looks native, offline state never fakes success.
 
-### Phase 13: SEO, AEO, GEO
+### Phase 14: SEO, AEO, GEO
 
-Per-shop metadata generation, Open Graph and Twitter cards, canonical URLs, sitemap, robots, JSON-LD (LocalBusiness/HairSalon, Service, Person, BreadcrumbList, FAQPage where content exists), natural language answer content blocks.
+Per-shop metadata generation, Open Graph and Twitter cards, canonical URLs, localized alternates with hreflang for en and ne, sitemap covering both locales, robots, JSON-LD (LocalBusiness/HairSalon, Service, Person, BreadcrumbList, FAQPage where content exists), natural language answer content blocks in both languages.
 
-Done when: rich results test validates schema and each shop page exposes complete business data.
+Done when: rich results test validates schema and each shop page exposes complete business data in en and ne.
 
-### Phase 14: Hardening, testing, performance polish
+### Phase 15: Hardening, testing, performance polish
 
-Playwright suites: booking journey, reschedule, cancel, admin lifecycle, theme change, tenant guard regression. Accessibility audit pass (WCAG 2.2 AA targets), keyboard sweeps, reduced motion verification, bundle analysis, image optimization, Core Web Vitals tuning, security review against spec section 53 checklist.
+Playwright suites: booking journey, reschedule, cancel, admin lifecycle, theme change, language switch, tenant guard regression. Accessibility audit pass (WCAG 2.2 AA targets), keyboard sweeps, reduced motion verification, bundle analysis, image optimization, Core Web Vitals tuning, security review against spec section 53 checklist.
 
 Done when: CI green including E2E, Lighthouse performance and accessibility 95+ on public pages, acceptance criteria in spec section 94 all checked.
 
@@ -364,14 +401,15 @@ Done when: CI green including E2E, Lighthouse performance and accessibility 95+ 
 
 ## 11. Risks and Mitigations
 
-| Risk                                            | Mitigation                                                                       |
-| ----------------------------------------------- | -------------------------------------------------------------------------------- |
-| Race condition double booking                   | Exclusion constraint plus transactional recheck (AD-03) with tested behavior     |
-| Timezone bugs around midnight                   | Zone-aware library only, dedicated tests, no string date math                    |
-| Serwist and Next 16 compatibility drift         | Verify early in Phase 12 spike, fallback to minimal custom SW                    |
-| iOS Safari PWA limitations                      | Treat Android as full target, iOS gets graceful degradation and install guidance |
-| Theme system leaking raw colors into components | Lint rule and review gate, tokens only                                           |
-| Over-engineering                                | Phase gates, ship vertical slices, spec section 90 mindset                       |
+| Risk                                                | Mitigation                                                                       |
+| --------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Race condition double booking                       | Exclusion constraint plus transactional recheck (AD-03) with tested behavior     |
+| Timezone bugs around midnight                       | Zone-aware library only, dedicated tests, no string date math                    |
+| Serwist and Next 16 compatibility drift             | Verify early in Phase 13 spike, fallback to minimal custom SW                    |
+| iOS Safari PWA limitations                          | Treat Android as full target, iOS gets graceful degradation and install guidance |
+| Nepali translation quality and Devanagari rendering | Native-speaker review before launch, typography checks in Phases 3 and 5         |
+| Theme system leaking raw colors into components     | Lint rule and review gate, tokens only                                           |
+| Over-engineering                                    | Phase gates, ship vertical slices, spec section 90 mindset                       |
 
 ---
 

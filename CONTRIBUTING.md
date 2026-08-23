@@ -9,6 +9,8 @@ Thanks for your interest in improving this project. This document covers how to 
 3. `cp .env.example .env.local` and fill in the values you need.
 4. `pnpm dev` and open http://localhost:3000
 
+This project uses pnpm exclusively. Never run `npm install` or `yarn install`; doing so rewrites the lockfile and breaks reproducible installs.
+
 Useful commands:
 
 | Command           | What it does                 |
