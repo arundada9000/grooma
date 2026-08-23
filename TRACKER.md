@@ -5,7 +5,7 @@ Plan reference: `docs/IMPLEMENTATION_PLAN.md`
 
 Project: Grooma (barber appointment system)
 Started: 2026-08-23
-Last updated: 2026-08-23 (phase 4 complete)
+Last updated: 2026-08-23 (phase 5 complete)
 
 ---
 
@@ -14,7 +14,7 @@ Last updated: 2026-08-23 (phase 4 complete)
 |                   |                                                                                           |
 | ----------------- | ----------------------------------------------------------------------------------------- |
 | Phase in progress | None                                                                                      |
-| Next up           | Phase 5: internationalization foundation                                                  |
+| Next up           | Phase 6: scheduling engine                                                                |
 | Blocking items    | Preview deployment check waits until the repo is pushed to GitHub and connected to Vercel |
 
 ---
@@ -30,7 +30,7 @@ Status values: `not-started`, `in-progress`, `done`
 | 2   | Authentication                         | done        | Better Auth 1.7, proxy.ts guard, owner bootstrap via seed               |
 | 3   | Design system and iOS HIG foundation   | done        | Tokens, primitives, motion, haptics, sound; showcase at /style          |
 | 4   | Theme engine and presets               | done        | Presets drive CSS variables from shop data                              |
-| 5   | Internationalization foundation        | not-started | en and ne locales, typed dictionaries, language toggle                  |
+| 5   | Internationalization foundation        | done        | en and ne locales, typed dictionaries, language toggle                  |
 | 6   | Scheduling engine                      | not-started | Pure module plus exhaustive Vitest suite                                |
 | 7   | Booking pipeline                       | not-started | Transactional actions, conflict recovery, rate limits                   |
 | 8   | Public customer experience             | not-started | Landing, services, barbers, booking flow, manage page                   |
@@ -107,17 +107,17 @@ Status values: `not-started`, `in-progress`, `done`
 
 ### Phase 5: Internationalization foundation
 
-- [ ] Locale types and supported locale list (`en` default, `ne`)
-- [ ] Typed dictionaries: `src/i18n/dictionaries/en.ts` base and `ne.ts`
-- [ ] Compile-time key checking against en base, fallback chain ne to en
-- [ ] Middleware locale negotiation: cookie, Accept-Language, default
-- [ ] `[locale]` route segment structure with root redirects
-- [ ] Server helper for dictionary access in Server Components
-- [ ] Client provider for dictionary access in Client Components
-- [ ] Language switcher preserving current path, persisted via cookie
-- [ ] Localized date, time, number, currency formatting helpers
-- [ ] hreflang alternates metadata helper
-- [ ] Verify both locales render Devanagari typography correctly
+- [x] Locale types and supported locale list (`en` default, `ne`)
+- [x] Typed dictionaries: `src/i18n/dictionaries/en.ts` base and `ne.ts`
+- [x] Compile-time key checking against en base, fallback chain ne to en
+- [x] Middleware locale negotiation: cookie, Accept-Language, default
+- [x] `[locale]` route segment structure with root redirects
+- [x] Server helper for dictionary access in Server Components
+- [x] Client provider for dictionary access in Client Components
+- [x] Language switcher preserving current path, persisted via cookie
+- [x] Localized date, time, number, currency formatting helpers
+- [x] hreflang alternates metadata helper
+- [x] Verify both locales render Devanagari typography correctly
 
 ### Phase 6: Scheduling engine
 
@@ -224,24 +224,41 @@ Status values: `not-started`, `in-progress`, `done`
 
 ## Decision Log
 
-| #     | Decision                                                                              | Rationale                                                                                                                                                                                                                     | Date       |
-| ----- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| AD-01 | Single shop runtime now, tenant-aware schema and data access from day one             | Owner request. Two upgrade paths preserved: separate deployment per shop, or slug based multi-tenant routing later                                                                                                            | 2026-08-23 |
-| AD-02 | Availability computed on demand, no slot storage                                      | Flexibility, spec section 25                                                                                                                                                                                                  | 2026-08-23 |
-| AD-03 | Postgres exclusion constraint plus transactional recheck for bookings                 | Database level guarantee against race conditions                                                                                                                                                                              | 2026-08-23 |
-| AD-04 | timestamptz UTC storage, wall-clock schedules interpreted in shop timezone            | Correctness across zones                                                                                                                                                                                                      | 2026-08-23 |
-| AD-05 | Snapshot fields on appointments                                                       | History must never change when services change                                                                                                                                                                                | 2026-08-23 |
-| AD-06 | Guest-first booking with hashed lookup tokens                                         | No forced accounts, secure access                                                                                                                                                                                             | 2026-08-23 |
-| AD-07 | iOS HIG interaction contract codified in design system                                | Owner priority. Consistency enforced at component level                                                                                                                                                                       | 2026-08-23 |
-| AD-08 | Server boundary contract: validate, resolve tenant, authenticate, authorize, transact | Security by structure, spec sections 53 and 78                                                                                                                                                                                | 2026-08-23 |
-| AD-09 | Route locales with typed custom dictionaries for en and ne                            | Owner request. Crawlable localized URLs, compile-time key safety, no heavy dependency for two locales                                                                                                                         | 2026-08-23 |
-| AD-10 | Better Auth owns identity tables; users.id is text, credentials live in accounts      | Matches library model exactly, avoids drift. Domain fields shopId and role injected via databaseHooks at create                                                                                                               | 2026-08-23 |
-| AD-11 | Edge proxy checks cookie presence only, real authorization server-side                | proxy.ts cannot query the database. requireUser/requireOwner enforce session and role on every admin page                                                                                                                     | 2026-08-23 |
-| AD-12 | Themes emit as inline CSS custom properties on html, consumed through semantic tokens | Inline beats stylesheet defaults with no cascade ordering games; unknown preset ids fall back to Classic Barbershop. connection() in the root layout keeps every route request-time so preset changes appear without rebuilds | 2026-08-23 |
+| #     | Decision                                                                                                | Rationale                                                                                                                                                                                                                     | Date       |
+| ----- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| AD-01 | Single shop runtime now, tenant-aware schema and data access from day one                               | Owner request. Two upgrade paths preserved: separate deployment per shop, or slug based multi-tenant routing later                                                                                                            | 2026-08-23 |
+| AD-02 | Availability computed on demand, no slot storage                                                        | Flexibility, spec section 25                                                                                                                                                                                                  | 2026-08-23 |
+| AD-03 | Postgres exclusion constraint plus transactional recheck for bookings                                   | Database level guarantee against race conditions                                                                                                                                                                              | 2026-08-23 |
+| AD-04 | timestamptz UTC storage, wall-clock schedules interpreted in shop timezone                              | Correctness across zones                                                                                                                                                                                                      | 2026-08-23 |
+| AD-05 | Snapshot fields on appointments                                                                         | History must never change when services change                                                                                                                                                                                | 2026-08-23 |
+| AD-06 | Guest-first booking with hashed lookup tokens                                                           | No forced accounts, secure access                                                                                                                                                                                             | 2026-08-23 |
+| AD-07 | iOS HIG interaction contract codified in design system                                                  | Owner priority. Consistency enforced at component level                                                                                                                                                                       | 2026-08-23 |
+| AD-08 | Server boundary contract: validate, resolve tenant, authenticate, authorize, transact                   | Security by structure, spec sections 53 and 78                                                                                                                                                                                | 2026-08-23 |
+| AD-09 | Route locales with typed custom dictionaries for en and ne                                              | Owner request. Crawlable localized URLs, compile-time key safety, no heavy dependency for two locales                                                                                                                         | 2026-08-23 |
+| AD-10 | Better Auth owns identity tables; users.id is text, credentials live in accounts                        | Matches library model exactly, avoids drift. Domain fields shopId and role injected via databaseHooks at create                                                                                                               | 2026-08-23 |
+| AD-11 | Edge proxy checks cookie presence only, real authorization server-side                                  | proxy.ts cannot query the database. requireUser/requireOwner enforce session and role on every admin page                                                                                                                     | 2026-08-23 |
+| AD-12 | Themes emit as inline CSS custom properties on html, consumed through semantic tokens                   | Inline beats stylesheet defaults with no cascade ordering games; unknown preset ids fall back to Classic Barbershop. connection() in the root layout keeps every route request-time so preset changes appear without rebuilds | 2026-08-23 |
+| AD-13 | Locale prefix routing via [locale] root segment; negotiation in proxy: cookie, Accept-Language, default | Crawlable localized URLs per AD-09. next/root-params exposes the locale to any Server Component without prop drilling. Auth redirects and admin gates stay locale aware                                                       | 2026-08-23 |
 
 ---
 
 ## Changelog
+
+### 2026-08-23 (session 8)
+
+- Fixed two runtime console errors on /style:
+  - Popover wrapped its trigger Button in a second button, causing nested button hydration errors; it now injects onClick and aria attributes onto the trigger element via cloneElement
+  - Pre paint scheme script rendered inside a manual head tag triggered the client script warning; replaced with the documented InlineScript pattern (text/javascript on server, text/plain on client, suppressHydrationWarning) at the top of body
+- Phase 5 complete:
+  - Routes restructured under src/app/[locale] with that layout as the root layout (html lang per locale); api/auth stays locale free
+  - Locale negotiation in proxy.ts: grooma.locale cookie first, then hand rolled Accept-Language quality parsing, then en; unknown paths redirect to /{locale}/... and persist the negotiated choice; admin cookie gate now runs after stripping the locale prefix and redirects to the localized sign-in
+  - Typed dictionaries: en base defines Dictionary, ne typed DeepPartial so missing keys are legal; dotted TranslationKey union gives compile-time key checking at call sites; resolver falls back to English per key and interpolates {vars}
+  - Server access via getLocale/getTranslator built on next/root-params locale() getter (fails the build if imported into client bundles); client access via LocaleProvider + useT
+  - Language switcher swaps the URL locale segment, persists through a server action (cookies store), then refreshes; mounted on the home page
+  - Formatting helpers for dates, times, currency (NPR from integer paisa) and numbers pinned to Asia/Kathmandu; hreflang alternates builder
+  - Home, sign-in, sign-in form, admin shell and sign out button fully routed through dictionaries; auth session redirects localized via root params
+  - Verified live: / redirects to /en setting the cookie, Accept-Language ne redirects to /ne, both locales render with correct lang attribute and Devanagari, admin gate preserves locale in next param, dead sessions redirect to the localized sign-in
+  - All checks green: format, lint, typecheck, 36 tests passing, production build with all routes dynamic
 
 ### 2026-08-23 (session 7)
 

@@ -12,7 +12,11 @@ import {
 import { getShopContext } from "@/lib/tenant";
 import { buildThemeStyle } from "@/lib/theme/theme-css";
 import { InlineScript } from "@/components/inline-script";
-import "./globals.css";
+import { LocaleProvider } from "@/i18n/client";
+import { getLocale, getTranslator } from "@/i18n/server";
+import { isLocale } from "@/i18n/config";
+import { notFound } from "next/navigation";
+import "../globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,13 +49,16 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "Grooma",
-    template: "%s | Grooma",
-  },
-  description: "Your grooming, made simple. Book barber appointments in seconds.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getTranslator();
+  return {
+    title: {
+      default: t("meta.titleDefault"),
+      template: t("meta.titleTemplate"),
+    },
+    description: t("meta.description"),
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -82,19 +89,24 @@ async function loadThemeStyle(): Promise<CSSProperties | undefined> {
   }
 }
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/[locale]">) {
+  const requested = await getLocale();
+  if (!isLocale(requested)) {
+    notFound();
+  }
+  const locale = requested;
   const themeStyle = await loadThemeStyle();
 
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} ${notoDevanagari.variable} ${inter.variable} ${oswald.variable} ${playfair.variable} h-full antialiased`}
       style={themeStyle}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">
         <InlineScript html={schemeScript} />
-        {children}
+        <LocaleProvider locale={locale}>{children}</LocaleProvider>
       </body>
     </html>
   );

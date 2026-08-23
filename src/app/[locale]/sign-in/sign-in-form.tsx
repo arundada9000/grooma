@@ -1,15 +1,19 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth/client";
+import { useLocale, useT } from "@/i18n/client";
 
 export function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const locale = useLocale();
+  const t = useT();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -25,13 +29,13 @@ export function SignInForm() {
         password,
       });
       if (signInError) {
-        setError("Invalid email or password.");
+        setError(t("signIn.invalidCredentials"));
         return;
       }
-      router.replace("/admin");
+      router.replace(searchParams.get("next") ?? `/${locale}/admin`);
       router.refresh();
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(t("signIn.genericError"));
     } finally {
       setPending(false);
     }
@@ -40,7 +44,7 @@ export function SignInForm() {
   return (
     <Card className="p-6">
       <form onSubmit={onSubmit} className="space-y-4">
-        <Field label="Email" htmlFor="email">
+        <Field label={t("signIn.email")} htmlFor="email">
           <Input
             id="email"
             type="email"
@@ -50,7 +54,7 @@ export function SignInForm() {
             onChange={(event) => setEmail(event.target.value)}
           />
         </Field>
-        <Field label="Password" htmlFor="password">
+        <Field label={t("signIn.password")} htmlFor="password">
           <Input
             id="password"
             type="password"
@@ -69,7 +73,7 @@ export function SignInForm() {
           </p>
         ) : null}
         <Button type="submit" fullWidth size="lg" loading={pending}>
-          {pending ? "Signing in..." : "Sign in"}
+          {pending ? t("signIn.submitting") : t("signIn.submit")}
         </Button>
       </form>
     </Card>
