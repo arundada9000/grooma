@@ -5,17 +5,17 @@ Plan reference: `docs/IMPLEMENTATION_PLAN.md`
 
 Project: Grooma (barber appointment system)
 Started: 2026-08-23
-Last updated: 2026-08-23 (phase 0 complete, plan revised for Grooma branding and en/ne i18n)
+Last updated: 2026-08-23 (phase 1 complete)
 
 ---
 
 ## Current Status
 
-|                   |                                                                                                         |
-| ----------------- | ------------------------------------------------------------------------------------------------------- |
-| Phase in progress | None                                                                                                    |
-| Next up           | Phase 1: database and tenancy core                                                                      |
-| Blocking items    | None in code. Preview deployment check waits until the repo is pushed to GitHub and connected to Vercel |
+|                   |                                                                                           |
+| ----------------- | ----------------------------------------------------------------------------------------- |
+| Phase in progress | None                                                                                      |
+| Next up           | Phase 2: authentication                                                                   |
+| Blocking items    | Preview deployment check waits until the repo is pushed to GitHub and connected to Vercel |
 
 ---
 
@@ -23,24 +23,24 @@ Last updated: 2026-08-23 (phase 0 complete, plan revised for Grooma branding and
 
 Status values: `not-started`, `in-progress`, `done`
 
-| #   | Phase                                  | Status      | Notes                                                  |
-| --- | -------------------------------------- | ----------- | ------------------------------------------------------ |
-| 0   | Repository and tooling foundation      | done        | CI runs on push once GitHub remote is added            |
-| 1   | Database and tenancy core              | not-started | Drizzle schema, seed, shop context, repositories       |
-| 2   | Authentication                         | not-started | Better Auth, roles, admin route protection             |
-| 3   | Design system and iOS HIG foundation   | not-started | Tokens, primitives, motion, haptics, sound             |
-| 4   | Theme engine and presets               | not-started | Presets drive CSS variables from shop data             |
-| 5   | Internationalization foundation        | not-started | en and ne locales, typed dictionaries, language toggle |
-| 6   | Scheduling engine                      | not-started | Pure module plus exhaustive Vitest suite               |
-| 7   | Booking pipeline                       | not-started | Transactional actions, conflict recovery, rate limits  |
-| 8   | Public customer experience             | not-started | Landing, services, barbers, booking flow, manage page  |
-| 9   | Admin operations                       | not-started | Dashboard, calendar, appointment actions, customers    |
-| 10  | Shop configuration admin               | not-started | Services, barbers, schedules, breaks, closures, rules  |
-| 11  | Theme and homepage customization admin | not-started | Theme editor, homepage section editor                  |
-| 12  | Notifications                          | not-started | In-app center, Resend email provider                   |
-| 13  | PWA                                    | not-started | Manifest, Serwist, offline shell, iOS meta             |
-| 14  | SEO, AEO, GEO                          | not-started | Metadata, JSON-LD, hreflang, sitemap, robots           |
-| 15  | Hardening, testing, performance polish | not-started | E2E suites, a11y audit, CWV                            |
+| #   | Phase                                  | Status      | Notes                                                                   |
+| --- | -------------------------------------- | ----------- | ----------------------------------------------------------------------- |
+| 0   | Repository and tooling foundation      | done        | CI runs on push once GitHub remote is added                             |
+| 1   | Database and tenancy core              | done        | Local Postgres 16 on this machine; compose file kept as portable option |
+| 2   | Authentication                         | not-started | Better Auth, roles, admin route protection                              |
+| 3   | Design system and iOS HIG foundation   | not-started | Tokens, primitives, motion, haptics, sound                              |
+| 4   | Theme engine and presets               | not-started | Presets drive CSS variables from shop data                              |
+| 5   | Internationalization foundation        | not-started | en and ne locales, typed dictionaries, language toggle                  |
+| 6   | Scheduling engine                      | not-started | Pure module plus exhaustive Vitest suite                                |
+| 7   | Booking pipeline                       | not-started | Transactional actions, conflict recovery, rate limits                   |
+| 8   | Public customer experience             | not-started | Landing, services, barbers, booking flow, manage page                   |
+| 9   | Admin operations                       | not-started | Dashboard, calendar, appointment actions, customers                     |
+| 10  | Shop configuration admin               | not-started | Services, barbers, schedules, breaks, closures, rules                   |
+| 11  | Theme and homepage customization admin | not-started | Theme editor, homepage section editor                                   |
+| 12  | Notifications                          | not-started | In-app center, Resend email provider                                    |
+| 13  | PWA                                    | not-started | Manifest, Serwist, offline shell, iOS meta                              |
+| 14  | SEO, AEO, GEO                          | not-started | Metadata, JSON-LD, hreflang, sitemap, robots                            |
+| 15  | Hardening, testing, performance polish | not-started | E2E suites, a11y audit, CWV                                             |
 
 ---
 
@@ -62,16 +62,16 @@ Status values: `not-started`, `in-progress`, `done`
 
 ### Phase 1: Database and tenancy core
 
-- [ ] Local Postgres via Docker Compose
-- [ ] Drizzle config and connection module
-- [ ] Schema: shops, users, services, barbers, barber_services
-- [ ] Schema: working_hours, breaks, closures, customers, appointments, notifications, email_log
-- [ ] Appointments exclusion constraint for overlap prevention
-- [ ] Indexes per plan section 5
-- [ ] Seed script: demo shop, services, three barbers, schedules, sample appointments
-- [ ] `getShopContext()` resolution from environment slug
-- [ ] Shop-scoped repository layer skeleton
-- [ ] Zod schemas for shop config JSONB shapes including LocalizedText
+- [x] Local Postgres provisioning (docker compose provided; this machine runs an existing Postgres 16, database `grooma` created)
+- [x] Drizzle config and connection module
+- [x] Schema: shops, users, services, barbers, barber_services
+- [x] Schema: working_hours, breaks, closures, customers, appointments, notifications, email_log
+- [x] Appointments exclusion constraint for overlap prevention (custom migration, verified 23P01 on overlap)
+- [x] Indexes per plan section 5
+- [x] Seed script: demo shop, five services, three barbers, schedules, recurring break, future closure, four sample appointments
+- [x] `getShopContext()` resolution from environment slug
+- [x] Shop-scoped repository layer skeleton
+- [x] Zod schemas for shop config JSONB shapes including LocalizedText
 
 ### Phase 2: Authentication
 
@@ -239,6 +239,21 @@ Status values: `not-started`, `in-progress`, `done`
 ---
 
 ## Changelog
+
+### 2026-08-23 (session 4)
+
+- Phase 1 complete:
+  - Added drizzle-orm, postgres driver, zod, server-only, drizzle-kit, tsx, dotenv
+  - Docker Compose for Postgres provided; this machine has no Docker so dev uses the existing local Postgres 16 (database grooma created)
+  - Full schema: shops, users, services, barbers, barber_services, working_hours, breaks, closures, customers, appointments, notifications, email_log with enums, indexes and FKs
+  - Custom migration adds btree_gist extension and the appointments_no_double_booking exclusion constraint
+  - Verified constraint live: overlapping insert rejected with 23P01 exclusion_violation
+  - Seed: Demo Classic Barbershop with bilingual service names, three barbers, Sun to Fri hours plus Hari late start, daily lunch break, future closure, four sample appointments across statuses
+  - getShopContext() request-cached resolver and shops repository
+  - Zod schemas for contact, location, social, branding, homepage sections, booking rules; LocalizedText type with en fallback plus tests
+  - Fixed ESM import hoisting pitfall with dedicated src/db/env.ts loader for scripts
+  - README setup section now reflects the real Phase 1 workflow
+  - All checks green: format, lint, typecheck, 11 tests passing, production build
 
 ### 2026-08-23 (session 3)
 

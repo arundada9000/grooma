@@ -52,25 +52,28 @@ See `docs/IMPLEMENTATION_PLAN.md` for the full architecture and `TRACKER.md` for
 
 ## Getting started
 
-Prerequisites: Node.js 20+ and pnpm 10. Docker is needed for local Postgres from Phase 1 onward.
+Prerequisites: Node.js 20+ and pnpm 10, plus any local PostgreSQL 16+. A `docker-compose.yml` is included if you prefer containers.
 
 This project uses pnpm exclusively. Do not run `npm install` or `yarn install`; it creates lockfile drift that CI will reject.
 
 ```bash
 pnpm install
-cp .env.example .env.local
+cp .env.example .env.local   # then set DATABASE_URL
+pnpm db:migrate              # apply Drizzle migrations
+pnpm db:seed                 # demo shop, services, barbers, sample appointments
 pnpm dev
 ```
 
-Open http://localhost:3000.
+Open http://localhost:3000. Sign-in arrives with Phase 2; seeded owner account: owner@democlassic.test.
 
-Database setup arrives with Phase 1:
+Useful database commands:
 
-```bash
-docker compose up -d        # local Postgres
-pnpm db:migrate             # apply Drizzle migrations
-pnpm db:seed                # demo shop, services, barbers, appointments
-```
+| Command            | What it does                                  |
+| ------------------ | --------------------------------------------- |
+| `pnpm db:generate` | Generate migrations from schema changes       |
+| `pnpm db:migrate`  | Apply migrations                              |
+| `pnpm db:seed`     | Reset and load demo data (destructive in dev) |
+| `pnpm db:studio`   | Browse data in Drizzle Studio                 |
 
 ## Scripts
 
