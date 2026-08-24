@@ -14,7 +14,7 @@ Last updated: 2026-08-24 (phase 6 scheduling engine)
 |                   |                                                                                           |
 | ----------------- | ----------------------------------------------------------------------------------------- |
 | Phase in progress | None                                                                                      |
-| Next up           | Phase 7: booking pipeline                                                                 |
+| Next up           | Phase 8: public customer experience                                                       |
 | Blocking items    | Preview deployment check waits until the repo is pushed to GitHub and connected to Vercel |
 
 ---
@@ -23,24 +23,24 @@ Last updated: 2026-08-24 (phase 6 scheduling engine)
 
 Status values: `not-started`, `in-progress`, `done`
 
-| #   | Phase                                  | Status      | Notes                                                                   |
-| --- | -------------------------------------- | ----------- | ----------------------------------------------------------------------- |
-| 0   | Repository and tooling foundation      | done        | CI runs on push once GitHub remote is added                             |
-| 1   | Database and tenancy core              | done        | Local Postgres 16 on this machine; compose file kept as portable option |
-| 2   | Authentication                         | done        | Better Auth 1.7, proxy.ts guard, owner bootstrap via seed               |
-| 3   | Design system and iOS HIG foundation   | done        | Tokens, primitives, motion, haptics, sound; showcase at /style          |
-| 4   | Theme engine and presets               | done        | Presets drive CSS variables from shop data                              |
-| 5   | Internationalization foundation        | done        | en and ne locales, typed dictionaries, language toggle                  |
+| #   | Phase                                  | Status      | Notes                                                                     |
+| --- | -------------------------------------- | ----------- | ------------------------------------------------------------------------- |
+| 0   | Repository and tooling foundation      | done        | CI runs on push once GitHub remote is added                               |
+| 1   | Database and tenancy core              | done        | Local Postgres 16 on this machine; compose file kept as portable option   |
+| 2   | Authentication                         | done        | Better Auth 1.7, proxy.ts guard, owner bootstrap via seed                 |
+| 3   | Design system and iOS HIG foundation   | done        | Tokens, primitives, motion, haptics, sound; showcase at /style            |
+| 4   | Theme engine and presets               | done        | Presets drive CSS variables from shop data                                |
+| 5   | Internationalization foundation        | done        | en and ne locales, typed dictionaries, language toggle                    |
 | 6   | Scheduling engine                      | done        | Pure module, 48 tests over the spec 74 matrix; zone safe via @date-fns/tz |
-| 7   | Booking pipeline                       | not-started | Transactional actions, conflict recovery, rate limits                   |
-| 8   | Public customer experience             | not-started | Landing, services, barbers, booking flow, manage page                   |
-| 9   | Admin operations                       | not-started | Dashboard, calendar, appointment actions, customers                     |
-| 10  | Shop configuration admin               | not-started | Services, barbers, schedules, breaks, closures, rules                   |
-| 11  | Theme and homepage customization admin | not-started | Theme editor, homepage section editor                                   |
-| 12  | Notifications                          | not-started | In-app center, Resend email provider                                    |
-| 13  | PWA                                    | not-started | Manifest, Serwist, offline shell, iOS meta                              |
-| 14  | SEO, AEO, GEO                          | not-started | Metadata, JSON-LD, hreflang, sitemap, robots                            |
-| 15  | Hardening, testing, performance polish | not-started | E2E suites, a11y audit, CWV                                             |
+| 7   | Booking pipeline                       | done        | Transactional core, exclusion constraint arbiter, race test green         |
+| 8   | Public customer experience             | not-started | Landing, services, barbers, booking flow, manage page                     |
+| 9   | Admin operations                       | not-started | Dashboard, calendar, appointment actions, customers                       |
+| 10  | Shop configuration admin               | not-started | Services, barbers, schedules, breaks, closures, rules                     |
+| 11  | Theme and homepage customization admin | not-started | Theme editor, homepage section editor                                     |
+| 12  | Notifications                          | not-started | In-app center, Resend email provider                                      |
+| 13  | PWA                                    | not-started | Manifest, Serwist, offline shell, iOS meta                                |
+| 14  | SEO, AEO, GEO                          | not-started | Metadata, JSON-LD, hreflang, sitemap, robots                              |
+| 15  | Hardening, testing, performance polish | not-started | E2E suites, a11y audit, CWV                                               |
 
 ---
 
@@ -131,13 +131,13 @@ Status values: `not-started`, `in-progress`, `done`
 
 ### Phase 7: Booking pipeline
 
-- [ ] getAvailability server action
-- [ ] createBooking transaction with recheck and constraint mapping
-- [ ] cancelByCustomer, rescheduleByCustomer with deadline checks
-- [ ] lookupAppointment with hashed token
-- [ ] Rate limiting on public endpoints
-- [ ] Conflict result codes driving recovery UX
-- [ ] Concurrency test proving single winner
+- [x] getAvailability server action
+- [x] createBooking transaction with recheck and constraint mapping
+- [x] cancelByCustomer, rescheduleByCustomer with deadline checks
+- [x] lookupAppointment with hashed token
+- [x] Rate limiting on public endpoints
+- [x] Conflict result codes driving recovery UX
+- [x] Concurrency test proving single winner
 
 ### Phase 8: Public customer experience
 
@@ -239,11 +239,26 @@ Status values: `not-started`, `in-progress`, `done`
 | AD-11 | Edge proxy checks cookie presence only, real authorization server-side                                  | proxy.ts cannot query the database. requireUser/requireOwner enforce session and role on every admin page                                                                                                                     | 2026-08-23 |
 | AD-12 | Themes emit as inline CSS custom properties on html, consumed through semantic tokens                   | Inline beats stylesheet defaults with no cascade ordering games; unknown preset ids fall back to Classic Barbershop. connection() in the root layout keeps every route request-time so preset changes appear without rebuilds | 2026-08-23 |
 | AD-13 | Locale prefix routing via [locale] root segment; negotiation in proxy: cookie, Accept-Language, default | Crawlable localized URLs per AD-09. next/root-params exposes the locale to any Server Component without prop drilling. Auth redirects and admin gates stay locale aware                                                       | 2026-08-23 |
-| AD-14 | Slot grid spans raw working hours; blocked minutes render disabled with reasons instead of vanishing    | A greyed chip with BREAK/CLOSURE/BOOKED beats an unexplained hole. Footprint = duration + buffer must fit one contiguous free window; barber hours replace shop hours for that weekday; ranges are half open [start, end)      | 2026-08-24 |
+| AD-14 | Slot grid spans raw working hours; blocked minutes render disabled with reasons instead of vanishing    | A greyed chip with BREAK/CLOSURE/BOOKED beats an unexplained hole. Footprint = duration + buffer must fit one contiguous free window; barber hours replace shop hours for that weekday; ranges are half open [start, end)     | 2026-08-24 |
+| AD-15 | Public endpoints rate limited in process per IP plus action                                             | Single Node instance now; the limiter is one function, swap its store for Redis when deployment fans out. Limits: availability 60/min, create 5/min, manage 20/min                                                            | 2026-08-24 |
+| AD-16 | Booking races decided by the exclusion constraint, app maps Postgres 23P01 to SLOT_UNAVAILABLE          | The transactional recheck narrows the window but cannot close it under READ COMMITTED; drizzle wraps driver errors so the cause chain is walked for the code                                                                  | 2026-08-24 |
 
 ---
 
 ## Changelog
+
+### 2026-08-24 (session 12)
+
+- Phase 7 booking pipeline complete:
+  - src/lib/booking/core.ts: getAvailabilityCore (engine input assembled from repositories), createBookingCore, cancelByCustomerCore, rescheduleByCustomerCore, lookupAppointmentCore; every mutation rechecks capacity inside its transaction and treats the appointments_no_double_booking exclusion constraint as final arbiter
+  - src/lib/booking/actions.ts ("use server"): validate with zod, resolve shop via getShopContext, rate limit per client IP and action (AD-15), delegate to core; results are discriminated unions, never thrown domain errors
+  - src/lib/booking/token.ts: 256 bit random lookup tokens in base64url, only SHA-256 stored, constant time compare
+  - src/db/repositories/booking.ts: shop scoped schedule loaders (hours, breaks, closures), busy ranges overlapping a window, eligible barbers with display names for snapshots, customer upsert keyed on shop plus phone, daily booking count
+  - src/lib/validation/booking.ts: public boundary schemas (date keys, wall times, loose phone, ANY or uuid barber selection, seven day availability window cap, token shape)
+  - src/lib/rate-limit.ts: sliding window buckets with opportunistic sweep; single instance today, Redis behind the same signature later
+  - Vitest env setup loads .env.local before module scope reads it; server-only stubbed for tests
+  - Integration suite against local Postgres (self skipping): race test proves exactly one winner of two concurrent bookings on the same slot, loser receives SLOT_UNAVAILABLE through error code 23P01 found by walking drizzle's cause chain (AD-16); plus ANY-barber booking with token lookup and cancel state machine, and maxDailyBookingsPerCustomer enforcement counted over the calendar day
+- All checks green: format, lint, typecheck, 93 tests total. Production build deferred while the dev server holds .next; no routes import the new actions yet
 
 ### 2026-08-24 (session 11)
 
