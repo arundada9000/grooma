@@ -40,6 +40,9 @@ pnpm-debug.log*
 
 # local agent and editor state
 .claude/
+.impeccable/
+.impeccable/live/sessions/
+.impeccable/live/inject-journal.json
 .opencode/
 .cursor/
 .idea/
