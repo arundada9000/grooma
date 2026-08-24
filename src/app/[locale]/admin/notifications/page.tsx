@@ -59,6 +59,7 @@ export default async function AdminNotificationsPage() {
         </div>
         {unreadCount > 0 ? (
           <form action={markAllReadAction}>
+            <input type="hidden" name="locale" value={locale} />
             <button
               type="submit"
               className="border-separator text-label hover:bg-inset inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium transition-colors"
@@ -91,6 +92,7 @@ export default async function AdminNotificationsPage() {
             return (
               <li key={row.id}>
                 <form action={openNotificationAction}>
+                  <input type="hidden" name="locale" value={locale} />
                   <input type="hidden" name="id" value={row.id} />
                   <input type="hidden" name="appointmentId" value={row.appointmentId ?? ""} />
                   <button type="submit" className={cnRow(isUnread)}>
