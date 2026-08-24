@@ -1,10 +1,19 @@
 # TEMP HANDOFF — delete this file after reading
 
 You are picking up Grooma (barber appointment system) in
-`D:\Programming\nextjs\barber-appointment-system`. Read `TRACKER.md` first:
-it is the single source of truth (board, AD decision log, changelog through
-session 17). `AGENTS.md` points at the Next.js docs in node_modules — this
-Next version has breaking changes, check there before writing code.
+`D:\Programming\nextjs\barber-appointment-system`. Read these before coding,
+in this order:
+
+1. `docs/initial-idea.md` — the product vision and scope (what Grooma is).
+2. `docs/IMPLEMENTATION_PLAN.md` — phase-by-phase build plan with done-gates;
+   work phase by phase, do not skip gates or reorder silently.
+3. `TRACKER.md` — single source of truth for current state: board with per-
+   phase checkboxes, AD-01…AD-20 decision log (read before changing anything
+   a decision touches), and changelog sessions 1–17. Update it every session:
+   tick checkboxes, append a changelog entry, add an AD row when you make an
+   architectural decision worth remembering.
+4. `AGENTS.md` — points at the Next.js docs in node_modules; this Next version
+   has breaking changes vs older training data, check there first.
 
 ## State
 
