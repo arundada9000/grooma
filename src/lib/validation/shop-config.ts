@@ -54,12 +54,43 @@ export const socialLinksSchema = z.object({
 });
 export type SocialLinks = z.infer<typeof socialLinksSchema>;
 
+/** Keys the homepage theme builder lets shops override per scheme. */
+const CUSTOM_COLOR_KEYS = [
+  "background",
+  "card",
+  "inset",
+  "label",
+  "labelSecondary",
+  "labelTertiary",
+  "separator",
+  "accent",
+  "accentSoft",
+  "onAccent",
+] as const;
+
+const cssColorSchema = z
+  .string()
+  .regex(/^(#[0-9a-fA-F]{3,8}|rgba?\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*(?:,\s*[\d.]+\s*)?\))$/)
+  .max(64);
+
+const colorOverrideShape = z.object(
+  Object.fromEntries(CUSTOM_COLOR_KEYS.map((key) => [key, cssColorSchema.optional()])),
+);
+
+export const SCALE_STYLE_IDS = ["standard", "soft", "deep"] as const;
+
+export const customThemeOverridesSchema = z.object({
+  light: colorOverrideShape.optional(),
+  dark: colorOverrideShape.optional(),
+  style: z.enum(SCALE_STYLE_IDS).optional(),
+});
+
 export const brandingConfigSchema = z.object({
   presetId: themePresetIdSchema,
   fontPairing: fontPairingIdSchema.optional(),
   logoUrl: z.url().max(500).optional(),
   faviconUrl: z.url().max(500).optional(),
-  customTheme: z.record(z.string(), z.unknown()).optional(),
+  customTheme: customThemeOverridesSchema.optional(),
 });
 export type BrandingConfig = z.infer<typeof brandingConfigSchema>;
 

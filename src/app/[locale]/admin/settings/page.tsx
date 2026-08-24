@@ -9,6 +9,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const CARDS = [
+  { href: "appearance", titleKey: "cards.appearanceTitle", descKey: "cards.appearanceDesc" },
+  { href: "homepage", titleKey: "cards.homepageTitle", descKey: "cards.homepageDesc" },
   { href: "services", titleKey: "cards.servicesTitle", descKey: "cards.servicesDesc" },
   { href: "barbers", titleKey: "cards.barbersTitle", descKey: "cards.barbersDesc" },
   { href: "schedule", titleKey: "cards.scheduleTitle", descKey: "cards.scheduleDesc" },

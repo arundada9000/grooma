@@ -14,7 +14,7 @@ Last updated: 2026-08-24 (phase 8 public customer experience)
 |                   |                                                                                           |
 | ----------------- | ----------------------------------------------------------------------------------------- |
 | Phase in progress | None                                                                                      |
-| Next up           | Phase 11: theme and homepage customization admin                                          |
+| Next up           | Phase 11 leftovers: builder contrast validation, section content model                    |
 | Blocking items    | Preview deployment check waits until the repo is pushed to GitHub and connected to Vercel |
 
 ---
@@ -175,10 +175,10 @@ Status values: `not-started`, `in-progress`, `done`
 
 ### Phase 11: Theme and homepage customization admin
 
-- [ ] Preset picker with live preview
-- [ ] Custom theme builder: colors, fonts, radius, style
+- [x] Preset picker with live preview
+- [x] Custom theme builder: colors, fonts, radius, style
 - [ ] Contrast validation in builder
-- [ ] Homepage section editor: enable, reorder, content, images
+- [ ] Homepage section editor: enable, reorder, content, images (enable + reorder done; content/images wait on the content model)
 - [ ] Per-locale homepage section content
 
 ### Phase 12: Notifications
@@ -250,6 +250,17 @@ Status values: `not-started`, `in-progress`, `done`
 ---
 
 ## Changelog
+
+### 2026-08-24 (session 16)
+
+- Phase 11 theme and homepage customization admin (core complete):
+  - buildThemeStyle now accepts customTheme overrides: light/dark color patches merge over the chosen preset per known key and a style id (standard/soft/deep) swaps the radius/shadow family; unknown style ids fall back to the preset's own scale (unit tested)
+  - brandingConfigSchema.customTheme is a typed shape (per scheme partial color records limited to the ten builder keys, css color strings, style enum); SCALE_STYLES exported from presets.ts
+  - /admin/settings/appearance: preset swatch cards (light/dark strips), font pairing pills, corner style toggle, per scheme custom color rows (hex/rgba text input with live swatch and clear), logo/favicon URL fields; the draft renders live by writing the same CSS variables buildThemeStyle emits straight onto document.documentElement, save persists through saveBrandingAction (whole object replace) and refreshes so the server layout re-emits identical vars
+  - /admin/settings/homepage: numbered section list with enable toggles, up/down reordering, unknown-yet-configured types trail disabled; save validates shape plus uniqueness and replaces the homepage JSONB wholesale; content stays a permissive passthrough until the content model phase
+  - Settings hub gains appearance + homepage cards; dictionary additions in en and ne incl. thirteen section labels
+- Verified live: appearance and homepage pages return 200 in en and ne with real seed data; no leaked translation keys; theme-css override merge covered by two new unit tests
+- All checks green: format, lint, typecheck, 95 tests
 
 ### 2026-08-24 (session 15)
 

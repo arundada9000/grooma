@@ -12,8 +12,10 @@ import {
   workingHours,
 } from "@/db/schema";
 import type {
+  BrandingConfig,
   BookingRules,
   ContactInfo,
+  HomepageConfig,
   LocationInfo,
   SocialLinks,
 } from "@/lib/validation/shop-config";
@@ -347,6 +349,18 @@ export async function deleteClosure(shopId: string, closureId: string): Promise<
 
 export async function updateBookingRules(shopId: string, rules: BookingRules): Promise<void> {
   await db.update(shops).set({ bookingRules: rules }).where(eq(shops.id, shopId));
+}
+
+/** Branding is a JSONB column; the action hands over an already validated object. */
+export async function updateBranding(shopId: string, branding: BrandingConfig): Promise<void> {
+  await db.update(shops).set({ branding }).where(eq(shops.id, shopId));
+}
+
+export async function updateHomepageSections(
+  shopId: string,
+  homepage: HomepageConfig,
+): Promise<void> {
+  await db.update(shops).set({ homepage }).where(eq(shops.id, shopId));
 }
 
 export async function updateShopProfile(

@@ -14,6 +14,7 @@ import {
   serviceInputSchema,
   shopProfileInputSchema,
 } from "@/lib/validation/admin";
+import { brandingConfigSchema, homepageConfigSchema } from "@/lib/validation/shop-config";
 import {
   countBarberAppointments,
   countServiceAppointments,
@@ -28,8 +29,10 @@ import {
   reorderServices,
   saveHoursForScope,
   setBarberServices,
+  updateBranding,
   updateBarber,
   updateBookingRules,
+  updateHomepageSections,
   updateService,
   updateShopProfile,
 } from "@/db/repositories/shop-config";
@@ -263,6 +266,44 @@ export async function saveShopProfileAction(raw: unknown): Promise<SettingsActio
     ...(data.location ? { location: data.location } : {}),
     ...(data.social ? { social: data.social } : {}),
   });
+  revalidateSettings();
+  return { ok: true };
+}
+
+const brandingInputSchema = brandingConfigSchema.extend({
+  logoUrl: z.union([z.url().max(500), z.literal("")]).optional(),
+  faviconUrl: z.union([z.url().max(500), z.literal("")]).optional(),
+});
+
+/** Whole-object replace; the client always sends the complete draft. */
+export async function saveBrandingAction(raw: unknown): Promise<SettingsActionResult> {
+  await requireOwner();
+  const shop = await getShopContext();
+  const parsed = brandingInputSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, code: "INVALID_INPUT" };
+  const { logoUrl, faviconUrl, ...rest } = parsed.data;
+  await updateBranding(shop.id, {
+    ...rest,
+    ...(logoUrl ? { logoUrl } : {}),
+    ...(faviconUrl ? { faviconUrl } : {}),
+  });
+  revalidateSettings();
+  return { ok: true };
+}
+
+/**
+ * Homepage sections are validated for shape and uniqueness; the order in
+ * the array is the render order. Content passthrough stays permissive so
+ * future section editors can ship without a migration.
+ */
+export async function saveHomepageAction(raw: unknown): Promise<SettingsActionResult> {
+  await requireOwner();
+  const shop = await getShopContext();
+  const parsed = homepageConfigSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, code: "INVALID_INPUT" };
+  const types = parsed.data.sections.map((section) => section.type);
+  if (new Set(types).size !== types.length) return { ok: false, code: "INVALID_INPUT" };
+  await updateHomepageSections(shop.id, parsed.data);
   revalidateSettings();
   return { ok: true };
 }

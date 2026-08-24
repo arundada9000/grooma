@@ -38,4 +38,30 @@ describe("buildThemeStyle", () => {
       expect(style["--td-label"]).toBeTruthy();
     }
   });
+
+  it("merges custom color and scale overrides on top of the preset", () => {
+    const style = buildThemeStyle({
+      presetId: "minimal",
+      customTheme: {
+        light: { accent: "#123456" },
+        dark: { background: "#0b0b0d" },
+        style: "deep",
+      },
+    }) as Record<string, string>;
+    expect(style["--tl-accent"]).toBe("#123456");
+    expect(style["--td-background"]).toBe("#0b0b0d");
+    // Untouched keys keep their preset values.
+    expect(style["--tl-card"]).toBe(PRESETS.minimal.light.card);
+    expect(style["--td-card"]).toBe(PRESETS.minimal.dark.card);
+    // Style override swaps the scale family.
+    expect(style["--t-radius-3xl"]).toBe("1.75rem");
+  });
+
+  it("ignores unknown style ids and keeps the preset scale", () => {
+    const style = buildThemeStyle({
+      presetId: "minimal",
+      customTheme: { style: "bogus" as never },
+    }) as Record<string, string>;
+    expect(style["--t-radius-2xl"]).toBe("0.75rem");
+  });
 });

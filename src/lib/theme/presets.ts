@@ -375,6 +375,15 @@ export const PRESETS: Record<string, ThemePreset> = {
 
 export const PRESET_IDS = Object.keys(PRESETS);
 
+/** Radius and shadow families a custom theme can pick from. */
+export const SCALE_STYLES = {
+  standard: STANDARD_SCALE,
+  soft: SOFT_SCALE,
+  deep: DEEP_SCALE,
+} as const;
+
+export type ScaleStyleId = keyof typeof SCALE_STYLES;
+
 /** Unknown ids fall back here so a bad database value can never blank the app. */
 export const FALLBACK_PRESET_ID = "classic-barbershop";
 
