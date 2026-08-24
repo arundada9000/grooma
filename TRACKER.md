@@ -14,7 +14,7 @@ Last updated: 2026-08-24 (phase 8 public customer experience)
 |                   |                                                                                           |
 | ----------------- | ----------------------------------------------------------------------------------------- |
 | Phase in progress | None                                                                                      |
-| Next up           | Phase 9: admin operations                                                                 |
+| Next up           | Phase 10: shop configuration admin                                                        |
 | Blocking items    | Preview deployment check waits until the repo is pushed to GitHub and connected to Vercel |
 
 ---
@@ -155,12 +155,12 @@ Status values: `not-started`, `in-progress`, `done`
 
 ### Phase 9: Admin operations
 
-- [ ] Dashboard: today list, next up, revenue estimate, warnings
-- [ ] Calendar: today, day timeline, week, list views
-- [ ] Appointment actions: confirm, complete, cancel, no-show, reschedule, notes
-- [ ] Customers list with history drawer
-- [ ] Mobile-friendly admin navigation
-- [ ] Admin strings routed through dictionaries, English first
+- [x] Dashboard: today list, next up, revenue estimate, warnings
+- [x] Calendar: today, day timeline, week, list views
+- [x] Appointment actions: confirm, complete, cancel, no-show, reschedule, notes
+- [x] Customers list with history drawer
+- [x] Mobile-friendly admin navigation
+- [x] Admin strings routed through dictionaries, English first
 
 ### Phase 10: Shop configuration admin
 
@@ -245,10 +245,26 @@ Status values: `not-started`, `in-progress`, `done`
 | AD-17 | Public chrome lives in the (public) route group under [locale]; admin and sign-in keep their own layout | SiteHeader/SiteFooter render once for every customer page while /admin and /signIn stay uncluttered; homepage sections map 1:1 to shop.homepage entries so enabling a section needs zero code                                 | 2026-08-24 |
 | AD-18 | Booking wizard keeps availability client side per seven day chunk keyed by selection signature          | Schema caps dateKeys at seven per call; cache misses on service/barber/refresh change replace cache clearing effects (no sync setState); slot chips derive HH:MM from engine startMinute, never from epoch arithmetic         | 2026-08-24 |
 | AD-19 | Race test pins one barber instead of ANY                                                                | Two ANY racers can legitimately each win a different chair once one transaction's busy read lands after the other's commit; the exclusion constraint only arbitrates colliding ranges on the same barber                      | 2026-08-24 |
+| AD-20 | Staff reschedule skips customer notice rules on purpose; staff status changes follow a TRANSITIONS map   | Owners move appointments freely (capacity probe plus exclusion constraint still arbitrate) while confirm/complete/noShow/cancel only apply from their legal source statuses, returning STATE_CONFLICT otherwise               | 2026-08-24 |
 
 ---
 
 ## Changelog
+
+### 2026-08-24 (session 14)
+
+- Phase 9 admin operations complete:
+  - src/db/repositories/admin.ts: listAppointmentsBetween, listUpcomingAppointments, getAppointmentDetail (adds email, notes, cancel reason, duration), listCustomers with ilike search and visit counts (aggregate timestamps coerced defensively: drivers may hand back strings), getCustomerHistory, listActiveBarbers, getServiceTiming for reschedule probes
+  - src/lib/admin/actions.ts ("use server"): setAppointmentStatusAction guarded by a TRANSITIONS map (AD-20), updateAdminNotesAction, rescheduleByStaffAction reusing barbersForExactSlot with the appointment's own range filtered out of busy and buffer from the live service row; Postgres 23P01 walked through the drizzle cause chain maps to SLOT_UNAVAILABLE
+  - Admin shell: layout requires OWNER once via requireOwner, noindex metadata, responsive AdminNav (top pills on desktop, fixed bottom tab bar on mobile); sign-out button takes its label from dictionaries
+  - Dashboard: stats grid (today count, pending, revenue today from COMPLETED price snapshots, completed today), next up card, warnings for PENDING inside a three hour window, today's appointments grouped by morning/afternoon/evening
+  - Calendar: day timeline / week grid (Sunday start, today ringed) / flat list views driven by ?view=&date= links; rows link into detail pages
+  - Appointment detail: snapshot fields, status chip translated via manage.status_* keys, staff actions (confirm/complete/no-show inline buttons, cancel with optional reason two step, reschedule panel reusing SlotPicker pinned to the barber), internal notes editor persisting through updateAdminNotesAction
+  - Customers page: search form over name and phone, cards with visit counts and last seen dates, Sheet based history drawer rendering server side history rows
+  - Dictionaries: admin block fully expanded in en, ne mirror covers nav/stats/warnings/calendar/appointments/customers headings; no leaked keys in rendered HTML
+- Verified live against dev server: anonymous /admin redirects 307 to localized sign-in in both locales; signed-in owner sees dashboard, calendar day/week/list, customers (+search), and detail pages return 200 in en and ne with real seed data
+- Staff mutations verified by typecheck contracts and guard behavior live; full click-through of actions deferred to the QA phase
+- All checks green: format, lint, typecheck, 93 tests
 
 ### 2026-08-24 (session 13)
 

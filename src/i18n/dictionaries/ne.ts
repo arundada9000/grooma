@@ -171,11 +171,45 @@ export const ne: DeepPartial<Dictionary> = {
   },
   admin: {
     dashboardTitle: "ड्यासबोर्ड",
-    shellNote: "अस्थायी खाका। पूर्ण एडमिन अनुभव पछिल्लो चरणमा आउँछ।",
     signedInAs: "साइन इन गरिएको",
     role: "भूमिका",
-    appointmentsToday: "आजका अपोइन्टमेन्ट",
     signOut: "साइन आउट",
+    nav: {
+      dashboard: "ड्यासबोर्ड",
+      calendar: "क्यालेन्डर",
+      customers: "ग्राहकहरू",
+    },
+    stats: {
+      today: "आजका अपोइन्टमेन्ट",
+      pending: "पुष्टि प्रतीक्षामा",
+      revenueToday: "आजको अपेक्षित आम्दानी",
+      completedToday: "आज सम्पन्न",
+    },
+    nextUp: {
+      title: "अब आउने",
+      none: "अझै कुनै बुकिङ छैन।",
+    },
+    warnings: {
+      title: "ध्यान चाहिने",
+      clear: "सबै ठीक छ।",
+    },
+    calendar: {
+      title: "क्यालेन्डर",
+      viewDay: "दिन",
+      viewWeek: "सप्ताह",
+      viewList: "सूची",
+    },
+    appointment: {
+      confirm: "पुष्टि गर्नुहोस्",
+      complete: "सम्पन्न",
+      cancelAction: "रद्द",
+      noShow: "आएन",
+      reschedule: "समय मिलाउनुहोस्",
+    },
+    customersPage: {
+      title: "ग्राहकहरू",
+      search: "नाम वा फोन खोज्नुहोस्",
+    },
   },
   notFound: {
     title: "यो पृष्ठ मेनुमा छैन।",

@@ -1,74 +1,134 @@
-import { and, eq, gte, lt } from "drizzle-orm";
 import type { Metadata } from "next";
-import { db } from "@/db";
-import { appointments } from "@/db/schema";
+import { getLocale, getTranslator } from "@/i18n/server";
+import { formatCurrency, formatDateTime, formatDate, formatTime } from "@/i18n/format";
+import { currentInstantMs, epochToZonedParts, wallTimeToEpochMs } from "@/lib/scheduling/format";
 import { requireOwner } from "@/lib/auth/session";
-import { getTranslator } from "@/i18n/server";
-import { SignOutButton } from "./sign-out-button";
+import { getShopContext } from "@/lib/tenant";
+import { listAppointmentsBetween, listUpcomingAppointments } from "@/db/repositories/admin";
+import { AppointmentRow, SectionCard } from "@/components/admin/appointment-bits";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getTranslator();
-  return {
-    title: t("admin.dashboardTitle"),
-  };
+  return { title: t("admin.dashboardTitle") };
 }
 
-function kathmanduDayBounds(): { startOfDay: Date; endOfDay: Date } {
-  const today = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Kathmandu",
-  }).format(new Date());
-  return {
-    startOfDay: new Date(`${today}T00:00:00+05:45`),
-    endOfDay: new Date(`${today}T24:00:00+05:45`),
-  };
-}
-
-export default async function AdminPage() {
-  // requireOwner enforces session + OWNER role; user.shopId scopes every query.
-  const session = await requireOwner();
+export default async function AdminDashboardPage() {
+  await requireOwner();
+  const locale = await getLocale();
   const { t } = await getTranslator();
-  const { startOfDay, endOfDay } = kathmanduDayBounds();
+  const shop = await getShopContext();
 
-  const todaysAppointments = await db
-    .select({ id: appointments.id })
-    .from(appointments)
-    .where(
-      and(
-        eq(appointments.shopId, session.user.shopId),
-        gte(appointments.startTime, startOfDay),
-        lt(appointments.startTime, endOfDay),
-      ),
-    )
-    .then((rows) => rows.length);
+  const nowMs = currentInstantMs();
+  const todayKey = epochToZonedParts(shop.timezone, nowMs).dateKey;
+  const dayStart = wallTimeToEpochMs(shop.timezone, todayKey, "00:00");
+  const dayEnd = dayStart + 86_400_000;
+
+  const [today, upcoming] = await Promise.all([
+    listAppointmentsBetween(shop.id, dayStart, dayEnd),
+    listUpcomingAppointments(shop.id, nowMs, 5),
+  ]);
+
+  const active = today.filter((row) => row.status === "PENDING" || row.status === "CONFIRMED");
+  const completed = today.filter((row) => row.status === "COMPLETED");
+  const expectedRevenue = [...active, ...completed].reduce((sum, row) => sum + row.priceCents, 0);
+
+  const nextUp = upcoming[0] ?? null;
+
+  // Pending starts within the warning window (or already started).
+  const WARN_WINDOW_MS = 3 * 3_600_000;
+  const warnings = today.filter(
+    (row) => row.status === "PENDING" && row.startMs - nowMs < WARN_WINDOW_MS,
+  );
 
   return (
-    <main className="mx-auto min-h-dvh max-w-3xl px-4 py-10">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-label-tertiary text-xs tracking-[0.2em] uppercase">Grooma</p>
-          <h1 className="text-label mt-1 text-2xl font-semibold tracking-tight">
-            {t("admin.dashboardTitle")}
-          </h1>
-          <p className="text-label-secondary mt-1 text-sm">{t("admin.shellNote")}</p>
-        </div>
-        <SignOutButton />
-      </header>
+    <div>
+      <h1 className="text-label text-[28px] font-semibold tracking-tight">
+        {t("admin.dashboardTitle")}
+      </h1>
+      <p className="text-label-secondary mt-0.5 text-sm">
+        {formatDate(nowMs, locale, { weekday: "long", month: "long", day: "numeric" })}
+      </p>
 
-      <section className="mt-8 grid gap-4 sm:grid-cols-3">
-        <div className="bg-card shadow-card ring-separator rounded-2xl p-5 ring-1">
-          <p className="text-label-secondary text-sm">{t("admin.signedInAs")}</p>
-          <p className="text-label mt-1 truncate font-medium">{session.user.name}</p>
-          <p className="text-label-secondary truncate text-sm">{session.user.email}</p>
-        </div>
-        <div className="bg-card shadow-card ring-separator rounded-2xl p-5 ring-1">
-          <p className="text-label-secondary text-sm">{t("admin.role")}</p>
-          <p className="text-label mt-1 font-medium">{session.user.role}</p>
-        </div>
-        <div className="bg-card shadow-card ring-separator rounded-2xl p-5 ring-1">
-          <p className="text-label-secondary text-sm">{t("admin.appointmentsToday")}</p>
-          <p className="text-label mt-1 font-medium">{todaysAppointments}</p>
-        </div>
-      </section>
-    </main>
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat label={t("admin.stats.today")} value={String(today.length)} />
+        <Stat
+          label={t("admin.stats.pending")}
+          value={String(today.filter((row) => row.status === "PENDING").length)}
+          tone={today.some((row) => row.status === "PENDING") ? "warning" : undefined}
+        />
+        <Stat
+          label={t("admin.stats.revenueToday")}
+          value={formatCurrency(expectedRevenue, locale)}
+        />
+        <Stat label={t("admin.stats.completedToday")} value={String(completed.length)} />
+      </div>
+
+      <SectionCard title={t("admin.nextUp.title")}>
+        {nextUp == null ? (
+          <p className="text-label-tertiary text-sm">{t("admin.nextUp.none")}</p>
+        ) : (
+          <div className="space-y-2">
+            <AppointmentRow
+              appointment={nextUp}
+              href={`/${locale}/admin/appointments/${nextUp.id}`}
+              locale={locale}
+            />
+            <p className="text-label-tertiary pl-1 text-[13px]">
+              {formatDateTime(nextUp.startMs, locale)}
+            </p>
+          </div>
+        )}
+      </SectionCard>
+
+      {warnings.length > 0 ? (
+        <SectionCard title={t("admin.warnings.title")}>
+          <ul className="bg-warning/10 ring-warning/30 space-y-2 rounded-2xl p-4 ring-1">
+            {warnings.map((row) => (
+              <li key={row.id} className="text-[15px]">
+                <span className="font-medium">
+                  {row.customerName} · {row.serviceName.en}
+                </span>{" "}
+                <span className="text-label-secondary">{formatTime(row.startMs, locale)}</span>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      ) : null}
+
+      <SectionCard title={t("admin.todayList.title")}>
+        {today.length === 0 ? (
+          <p className="text-label-tertiary text-sm">{t("admin.todayList.empty")}</p>
+        ) : (
+          <ul className="space-y-2">
+            {today.map((row) => (
+              <li key={row.id}>
+                <AppointmentRow
+                  appointment={row}
+                  href={`/${locale}/admin/appointments/${row.id}`}
+                  locale={locale}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </SectionCard>
+    </div>
+  );
+}
+
+function Stat({ label, value, tone }: { label: string; value: string; tone?: "warning" }) {
+  return (
+    <div className="bg-card shadow-card ring-separator rounded-2xl p-4 ring-1">
+      <p className="text-label-secondary truncate text-xs">{label}</p>
+      <p
+        className={
+          tone === "warning"
+            ? "text-warning mt-1 text-xl font-semibold tabular-nums"
+            : "text-label mt-1 text-xl font-semibold tabular-nums"
+        }
+      >
+        {value}
+      </p>
+    </div>
   );
 }
