@@ -9,10 +9,15 @@ import {
   BarbersSection,
   BookingCtaSection,
   ContactSection,
+  FaqSection,
+  FeaturedServiceSection,
+  GallerySection,
   HeroSection,
   LocationSection,
   OpeningHoursSection,
   ServicesSection,
+  TestimonialsSection,
+  WhyUsSection,
 } from "@/components/home/sections";
 
 export default async function HomePage() {
@@ -83,6 +88,8 @@ function HomepageSectionRenderer({
           bookHref={data.bookHref}
           browseHref={data.servicesHref}
           labels={data.heroLabels}
+          locale={data.locale}
+          content={section.content}
         />
       );
     case "services":
@@ -91,28 +98,76 @@ function HomepageSectionRenderer({
           services={data.services}
           locale={data.locale}
           viewAllHref={data.servicesHref}
+          content={section.content}
         />
       );
+    case "featured-service": {
+      const featured = section.content.serviceId
+        ? data.services.find((service) => service.id === section.content.serviceId)
+        : undefined;
+      if (!featured) return null;
+      return (
+        <FeaturedServiceSection
+          service={featured}
+          locale={data.locale}
+          bookHref={data.bookHref}
+          content={section.content}
+        />
+      );
+    }
     case "barbers":
       return (
         <BarbersSection
           barbers={data.barbers}
           locale={data.locale}
           viewAllHref={data.barbersHref}
+          content={section.content}
         />
       );
     case "about":
-      return <AboutSection description={data.shop.description} />;
+      return (
+        <AboutSection
+          description={data.shop.description}
+          locale={data.locale}
+          content={section.content}
+        />
+      );
+    case "why-us":
+      return <WhyUsSection locale={data.locale} content={section.content} />;
+    case "gallery":
+      return <GallerySection locale={data.locale} content={section.content} />;
+    case "testimonials":
+      return <TestimonialsSection locale={data.locale} content={section.content} />;
+    case "faq":
+      return <FaqSection locale={data.locale} content={section.content} />;
     case "opening-hours":
-      return <OpeningHoursSection hours={data.hours} />;
+      return (
+        <OpeningHoursSection hours={data.hours} locale={data.locale} content={section.content} />
+      );
     case "location":
-      return <LocationSection location={data.shop.location} />;
+      return (
+        <LocationSection
+          location={data.shop.location}
+          locale={data.locale}
+          content={section.content}
+        />
+      );
     case "contact":
-      return <ContactSection contact={data.shop.contact} />;
+      return (
+        <ContactSection
+          contact={data.shop.contact}
+          locale={data.locale}
+          content={section.content}
+        />
+      );
     case "booking-cta":
-      return <BookingCtaSection bookHref={data.bookHref} />;
-    // Content authored sections (gallery, testimonials, faq, featured)
-    // render once the homepage editor phase ships their content model.
+      return (
+        <BookingCtaSection
+          bookHref={data.bookHref}
+          locale={data.locale}
+          content={section.content}
+        />
+      );
     default:
       return null;
   }

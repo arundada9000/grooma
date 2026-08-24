@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { localizedTextSchema } from "@/i18n/localized-text";
 
 /**
  * Zod schemas for shop authored configuration stored in JSONB columns.
@@ -110,11 +111,170 @@ export const HOMEPAGE_SECTION_TYPES = [
   "booking-cta",
 ] as const;
 
-const homepageSectionSchema = z.object({
-  type: z.enum(HOMEPAGE_SECTION_TYPES),
-  enabled: z.boolean(),
-  content: z.record(z.string(), z.unknown()).default({}),
+/**
+ * Per section type content. Every field is optional so an empty content
+ * object is valid everywhere: sections fall back to shop columns, live
+ * catalog data, and dictionary defaults when the owner authored nothing.
+ * Unknown keys are stripped on parse, which keeps older rows loadable.
+ */
+
+const homepageImageSchema = z.object({
+  url: z.url().max(500),
+  alt: localizedTextSchema.optional(),
 });
+export type HomepageImage = z.infer<typeof homepageImageSchema>;
+
+const headingOverrideSchema = z.object({
+  title: localizedTextSchema.optional(),
+  subtitle: localizedTextSchema.optional(),
+});
+
+export const heroContentSchema = z.object({
+  headline: localizedTextSchema.optional(),
+  subheadline: localizedTextSchema.optional(),
+  imageUrl: z.url().max(500).optional(),
+  ctaLabel: localizedTextSchema.optional(),
+  secondaryCtaLabel: localizedTextSchema.optional(),
+});
+export type HeroContent = z.infer<typeof heroContentSchema>;
+
+const servicesContentSchema = headingOverrideSchema;
+export type ServicesContent = z.infer<typeof servicesContentSchema>;
+
+export const featuredServiceContentSchema = z.object({
+  serviceId: z.uuid().optional(),
+  title: localizedTextSchema.optional(),
+  subtitle: localizedTextSchema.optional(),
+});
+export type FeaturedServiceContent = z.infer<typeof featuredServiceContentSchema>;
+
+const barbersContentSchema = headingOverrideSchema;
+export type BarbersContent = z.infer<typeof barbersContentSchema>;
+
+export const aboutContentSchema = z.object({
+  body: localizedTextSchema.optional(),
+  imageUrl: z.url().max(500).optional(),
+});
+export type AboutContent = z.infer<typeof aboutContentSchema>;
+
+export const whyUsItemSchema = z.object({
+  title: localizedTextSchema,
+  description: localizedTextSchema.optional(),
+});
+export type WhyUsItem = z.infer<typeof whyUsItemSchema>;
+
+const whyUsContentSchema = z.object({
+  items: z.array(whyUsItemSchema).max(6).optional(),
+});
+export type WhyUsContent = z.infer<typeof whyUsContentSchema>;
+
+const galleryContentSchema = z.object({
+  images: z.array(homepageImageSchema).max(12).optional(),
+});
+export type GalleryContent = z.infer<typeof galleryContentSchema>;
+
+export const testimonialItemSchema = z.object({
+  quote: localizedTextSchema,
+  author: z.string().trim().min(1).max(120),
+  role: localizedTextSchema.optional(),
+});
+export type TestimonialItem = z.infer<typeof testimonialItemSchema>;
+
+const testimonialsContentSchema = z.object({
+  items: z.array(testimonialItemSchema).max(9).optional(),
+});
+export type TestimonialsContent = z.infer<typeof testimonialsContentSchema>;
+
+export const faqItemSchema = z.object({
+  question: localizedTextSchema,
+  answer: localizedTextSchema,
+});
+export type FaqItem = z.infer<typeof faqItemSchema>;
+
+const faqContentSchema = z.object({
+  items: z.array(faqItemSchema).max(10).optional(),
+});
+export type FaqContent = z.infer<typeof faqContentSchema>;
+
+const openingHoursContentSchema = headingOverrideSchema;
+export type OpeningHoursContent = z.infer<typeof openingHoursContentSchema>;
+
+const locationContentSchema = headingOverrideSchema;
+export type LocationContent = z.infer<typeof locationContentSchema>;
+
+const contactContentSchema = headingOverrideSchema;
+export type ContactContent = z.infer<typeof contactContentSchema>;
+
+export const bookingCtaContentSchema = z.object({
+  title: localizedTextSchema.optional(),
+  subtitle: localizedTextSchema.optional(),
+  buttonLabel: localizedTextSchema.optional(),
+});
+export type BookingCtaContent = z.infer<typeof bookingCtaContentSchema>;
+
+export const homepageSectionSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("hero"),
+    enabled: z.boolean(),
+    content: heroContentSchema.default({}),
+  }),
+  z.object({
+    type: z.literal("services"),
+    enabled: z.boolean(),
+    content: servicesContentSchema.default({}),
+  }),
+  z.object({
+    type: z.literal("featured-service"),
+    enabled: z.boolean(),
+    content: featuredServiceContentSchema.default({}),
+  }),
+  z.object({
+    type: z.literal("barbers"),
+    enabled: z.boolean(),
+    content: barbersContentSchema.default({}),
+  }),
+  z.object({
+    type: z.literal("about"),
+    enabled: z.boolean(),
+    content: aboutContentSchema.default({}),
+  }),
+  z.object({
+    type: z.literal("why-us"),
+    enabled: z.boolean(),
+    content: whyUsContentSchema.default({}),
+  }),
+  z.object({
+    type: z.literal("gallery"),
+    enabled: z.boolean(),
+    content: galleryContentSchema.default({}),
+  }),
+  z.object({
+    type: z.literal("testimonials"),
+    enabled: z.boolean(),
+    content: testimonialsContentSchema.default({}),
+  }),
+  z.object({ type: z.literal("faq"), enabled: z.boolean(), content: faqContentSchema.default({}) }),
+  z.object({
+    type: z.literal("opening-hours"),
+    enabled: z.boolean(),
+    content: openingHoursContentSchema.default({}),
+  }),
+  z.object({
+    type: z.literal("location"),
+    enabled: z.boolean(),
+    content: locationContentSchema.default({}),
+  }),
+  z.object({
+    type: z.literal("contact"),
+    enabled: z.boolean(),
+    content: contactContentSchema.default({}),
+  }),
+  z.object({
+    type: z.literal("booking-cta"),
+    enabled: z.boolean(),
+    content: bookingCtaContentSchema.default({}),
+  }),
+]);
 
 export const homepageConfigSchema = z.object({
   sections: z.array(homepageSectionSchema),

@@ -11,10 +11,11 @@ import {
   breakInputSchema,
   closureInputSchema,
   dayHoursInputSchema,
+  homepageConfigInputSchema,
   serviceInputSchema,
   shopProfileInputSchema,
 } from "@/lib/validation/admin";
-import { brandingConfigSchema, homepageConfigSchema } from "@/lib/validation/shop-config";
+import { brandingConfigSchema, type HomepageSection } from "@/lib/validation/shop-config";
 import { checkPalette } from "@/lib/theme/contrast";
 import { resolvePalettes } from "@/lib/theme/theme-css";
 import {
@@ -319,17 +320,19 @@ export async function saveBrandingAction(raw: unknown): Promise<BrandingResult> 
 
 /**
  * Homepage sections are validated for shape and uniqueness; the order in
- * the array is the render order. Content passthrough stays permissive so
- * future section editors can ship without a migration.
+ * the array is the render order. Content inputs collapse blank fields and
+ * empty repeater rows before storage (see validation/admin.ts), so stored
+ * rows always satisfy the strict homepageConfigSchema the renderer reads.
  */
 export async function saveHomepageAction(raw: unknown): Promise<SettingsActionResult> {
   await requireOwner();
   const shop = await getShopContext();
-  const parsed = homepageConfigSchema.safeParse(raw);
+  const parsed = homepageConfigInputSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, code: "INVALID_INPUT" };
   const types = parsed.data.sections.map((section) => section.type);
   if (new Set(types).size !== types.length) return { ok: false, code: "INVALID_INPUT" };
-  await updateHomepageSections(shop.id, parsed.data);
+  const sections: HomepageSection[] = parsed.data.sections;
+  await updateHomepageSections(shop.id, { sections });
   revalidateSettings();
   return { ok: true };
 }
