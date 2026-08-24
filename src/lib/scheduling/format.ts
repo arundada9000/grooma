@@ -95,3 +95,11 @@ export function minuteOfDayToHHMM(minutes: number): string {
   const m = minutes % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
+
+/**
+ * Current wall clock instant. Isolated so impure reads stay out of
+ * component render bodies (React purity rules).
+ */
+export function currentInstantMs(): number {
+  return Date.now();
+}

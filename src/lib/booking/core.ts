@@ -353,3 +353,31 @@ export async function lookupAppointmentCore(shop: Shop, token: string): Promise<
   }
   return { ok: true, appointment: toView(appointment) };
 }
+
+/**
+ * Everything the manage page renders in one read: the customer safe
+ * view plus the internal ids the reschedule slot picker needs and the
+ * cancel deadline instant.
+ */
+export interface ManageModel {
+  view: AppointmentView;
+  serviceId: string;
+  barberId: string;
+  /** Epoch ms after which cancellation is blocked; null when no deadline. */
+  cancelUntilMs: number | null;
+}
+
+export async function getManageModel(shop: Shop, token: string): Promise<ManageModel | null> {
+  const appointment = await findAppointmentByTokenHash(hashLookupToken(token));
+  if (!appointment || appointment.shopId !== shop.id) {
+    return null;
+  }
+  const deadlineMinutes = shop.bookingRules.cancelDeadlineMinutes;
+  return {
+    view: toView(appointment),
+    serviceId: appointment.serviceId,
+    barberId: appointment.barberId,
+    cancelUntilMs:
+      deadlineMinutes > 0 ? appointment.startTime.getTime() - deadlineMinutes * 60_000 : null,
+  };
+}

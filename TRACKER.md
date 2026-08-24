@@ -5,7 +5,7 @@ Plan reference: `docs/IMPLEMENTATION_PLAN.md`
 
 Project: Grooma (barber appointment system)
 Started: 2026-08-23
-Last updated: 2026-08-24 (phase 6 scheduling engine)
+Last updated: 2026-08-24 (phase 8 public customer experience)
 
 ---
 
@@ -14,7 +14,7 @@ Last updated: 2026-08-24 (phase 6 scheduling engine)
 |                   |                                                                                           |
 | ----------------- | ----------------------------------------------------------------------------------------- |
 | Phase in progress | None                                                                                      |
-| Next up           | Phase 8: public customer experience                                                       |
+| Next up           | Phase 9: admin operations                                                                 |
 | Blocking items    | Preview deployment check waits until the repo is pushed to GitHub and connected to Vercel |
 
 ---
@@ -33,7 +33,7 @@ Status values: `not-started`, `in-progress`, `done`
 | 5   | Internationalization foundation        | done        | en and ne locales, typed dictionaries, language toggle                    |
 | 6   | Scheduling engine                      | done        | Pure module, 48 tests over the spec 74 matrix; zone safe via @date-fns/tz |
 | 7   | Booking pipeline                       | done        | Transactional core, exclusion constraint arbiter, race test green         |
-| 8   | Public customer experience             | not-started | Landing, services, barbers, booking flow, manage page                     |
+| 8   | Public customer experience             | done        | Home, services, barbers, booking wizard, manage page, ICS route           |
 | 9   | Admin operations                       | not-started | Dashboard, calendar, appointment actions, customers                       |
 | 10  | Shop configuration admin               | not-started | Services, barbers, schedules, breaks, closures, rules                     |
 | 11  | Theme and homepage customization admin | not-started | Theme editor, homepage section editor                                     |
@@ -141,16 +141,16 @@ Status values: `not-started`, `in-progress`, `done`
 
 ### Phase 8: Public customer experience
 
-- [ ] Homepage sections rendered from shop.homepage
-- [ ] Services page, Barbers page
-- [ ] Contact, opening hours, location blocks
-- [ ] Booking flow: service, barber or any, date, time, details, review, confirmation
-- [ ] Full-screen mobile booking sheet with progress header
-- [ ] Appointment manage page via secure link
-- [ ] Cancel and reschedule flows with deadline messaging
-- [ ] Add to calendar (.ics) download
-- [ ] Book again shortcut
-- [ ] Every customer-facing string flows through dictionaries, en and ne verified
+- [x] Homepage sections rendered from shop.homepage
+- [x] Services page, Barbers page
+- [x] Contact, opening hours, location blocks
+- [x] Booking flow: service, barber or any, date, time, details, review, confirmation
+- [x] Full-screen mobile booking sheet with progress header
+- [x] Appointment manage page via secure link
+- [x] Cancel and reschedule flows with deadline messaging
+- [x] Add to calendar (.ics) download
+- [x] Book again shortcut
+- [x] Every customer-facing string flows through dictionaries, en and ne verified
 - [ ] Loading, empty, error, offline states styled
 
 ### Phase 9: Admin operations
@@ -242,10 +242,30 @@ Status values: `not-started`, `in-progress`, `done`
 | AD-14 | Slot grid spans raw working hours; blocked minutes render disabled with reasons instead of vanishing    | A greyed chip with BREAK/CLOSURE/BOOKED beats an unexplained hole. Footprint = duration + buffer must fit one contiguous free window; barber hours replace shop hours for that weekday; ranges are half open [start, end)     | 2026-08-24 |
 | AD-15 | Public endpoints rate limited in process per IP plus action                                             | Single Node instance now; the limiter is one function, swap its store for Redis when deployment fans out. Limits: availability 60/min, create 5/min, manage 20/min                                                            | 2026-08-24 |
 | AD-16 | Booking races decided by the exclusion constraint, app maps Postgres 23P01 to SLOT_UNAVAILABLE          | The transactional recheck narrows the window but cannot close it under READ COMMITTED; drizzle wraps driver errors so the cause chain is walked for the code                                                                  | 2026-08-24 |
+| AD-17 | Public chrome lives in the (public) route group under [locale]; admin and sign-in keep their own layout | SiteHeader/SiteFooter render once for every customer page while /admin and /signIn stay uncluttered; homepage sections map 1:1 to shop.homepage entries so enabling a section needs zero code                                 | 2026-08-24 |
+| AD-18 | Booking wizard keeps availability client side per seven day chunk keyed by selection signature          | Schema caps dateKeys at seven per call; cache misses on service/barber/refresh change replace cache clearing effects (no sync setState); slot chips derive HH:MM from engine startMinute, never from epoch arithmetic         | 2026-08-24 |
+| AD-19 | Race test pins one barber instead of ANY                                                                | Two ANY racers can legitimately each win a different chair once one transaction's busy read lands after the other's commit; the exclusion constraint only arbitrates colliding ranges on the same barber                      | 2026-08-24 |
 
 ---
 
 ## Changelog
+
+### 2026-08-24 (session 13)
+
+- Phase 8 public customer experience complete:
+  - Route group src/app/[locale]/(public) owns the customer chrome: SiteHeader (shop identity, nav, LanguageSwitcher, book pill) and SiteFooter; admin and sign-in stay outside the group (AD-17)
+  - Home page renders enabled shop.homepage sections through a registry: hero, services, barbers (live catalog), about, opening hours (merged intervals, today highlighted via epochToZonedParts), location with Google Maps deep link, contact chips (tel/wa.me/mailto), booking CTA; content dependent types (gallery/testimonials/faq/featured) render null until phase 11 ships their editor
+  - Services and barbers pages list active rows with per item book links carrying ?service= / ?barber= prefills into the wizard
+  - Booking wizard (client): SERVICE to BARBER to TIME to DETAILS to REVIEW stepper with progress dots; SlotPicker fetches availability per seven day chunk through getAvailabilityAction, shows disabled chips for blocked starts, day strip with closed days dimmed; details validated against the same shapes as the zod boundary; review confirms through createBookingAction
+  - Conflict recovery: SLOT_UNAVAILABLE and RULE_VIOLATION PAST/MIN_NOTICE show the conflict banner, bump the picker refresh signal so slots refetch, keep the customer on the time step; other codes map to dictionary messages keyed by BookingErrorCode
+  - Confirmation screen links manage/{token} and /api/manage/{token}/ics
+  - Manage flow: /[locale]/manage token entry page; /[locale]/manage/[token] renders status badge with tone mapping, snapshot fields resolved against the active locale, cancel deadline note, inline two step cancel confirm, reschedule panel reusing SlotPicker pinned to the appointment's own barber, add to calendar, book again; getManageModel in core.ts serves the page one read including serviceId/barberId the view deliberately omits
+  - ICS route handler: RFC 5545 escaping, UTC basic timestamps, shop boundary enforced, 410 once cancelled, no-store
+  - Dictionaries expanded for every new surface in en plus ne mirror (book steps/errors/slot labels, manage statuses/actions/deadline note, footer); translate falls back to English per key
+  - React purity lint compliance: Date.now isolated behind currentInstantMs helper; slot picker cache keyed by selection signature instead of clearing effects (no synchronous setState in effects)
+- Race test hardened: pins hariBarberId so the exclusion constraint is the arbiter; with ANY two winners could legitimately take different chairs when one transaction's busy read lands after the other's commit (AD-19)
+- Verified live against dev server: en and ne home/services/barbers/book/manage return 200 with real seed data; seeded PENDING appointment round trips through manage page (details, deadline note, actions) and ICS download (correct 04:15Z for 10:00 Kathmandu); garbage tokens 404 on both manage page and ICS; smoke row removed afterwards
+- All checks green: format, lint, typecheck, 93 tests. Production build still deferred while dev server holds .next
 
 ### 2026-08-24 (session 12)
 

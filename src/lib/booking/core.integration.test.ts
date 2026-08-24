@@ -32,6 +32,7 @@ async function databaseReachable(): Promise<boolean> {
 describe.skipIf(!(await databaseReachable()))("booking pipeline integration", () => {
   let shopId = "";
   let serviceId = "";
+  let hariBarberId = "";
   let shopRow: Shop;
 
   const rules = {
@@ -110,6 +111,7 @@ describe.skipIf(!(await databaseReachable()))("booking pipeline integration", ()
     await db
       .insert(barberServices)
       .values(barberRows.map((barber) => ({ barberId: barber.id, serviceId })));
+    hariBarberId = barberRows[0].id;
   });
 
   afterAll(async () => {
@@ -144,9 +146,12 @@ describe.skipIf(!(await databaseReachable()))("booking pipeline integration", ()
   });
 
   it("lets exactly one racer win the same slot", async () => {
+    // Both racers target the SAME barber: with ANY, two winners could
+    // legitimately take different chairs; the exclusion constraint is
+    // only the arbiter when the ranges collide on one barber.
     const input = {
       serviceId,
-      barberId: "ANY",
+      barberId: hariBarberId,
       dateKey: futureMonday(),
       time: "11:00",
       customer: { name: "Race Guest", phone: "+977-981-0000002" },
