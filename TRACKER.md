@@ -14,7 +14,7 @@ Last updated: 2026-08-24 (phase 8 public customer experience)
 |                   |                                                                                           |
 | ----------------- | ----------------------------------------------------------------------------------------- |
 | Phase in progress | None                                                                                      |
-| Next up           | Phase 10: shop configuration admin                                                        |
+| Next up           | Phase 11: theme and homepage customization admin                                          |
 | Blocking items    | Preview deployment check waits until the repo is pushed to GitHub and connected to Vercel |
 
 ---
@@ -164,14 +164,14 @@ Status values: `not-started`, `in-progress`, `done`
 
 ### Phase 10: Shop configuration admin
 
-- [ ] Services manager CRUD with reorder
-- [ ] Barbers manager with service assignment
-- [ ] Schedule editor, shop and barber level, multi-interval
-- [ ] Breaks manager: recurring and one-off
-- [ ] Closures manager: full day and partial
-- [ ] Booking rules form
-- [ ] General, contact, location settings forms
-- [ ] LocalizedText editing support (en required, ne optional)
+- [x] Services manager CRUD with reorder
+- [x] Barbers manager with service assignment
+- [x] Schedule editor, shop and barber level, multi-interval
+- [x] Breaks manager: recurring and one-off
+- [x] Closures manager: full day and partial
+- [x] Booking rules form
+- [x] General, contact, location settings forms
+- [x] LocalizedText editing support (en required, ne optional)
 
 ### Phase 11: Theme and homepage customization admin
 
@@ -245,11 +245,27 @@ Status values: `not-started`, `in-progress`, `done`
 | AD-17 | Public chrome lives in the (public) route group under [locale]; admin and sign-in keep their own layout | SiteHeader/SiteFooter render once for every customer page while /admin and /signIn stay uncluttered; homepage sections map 1:1 to shop.homepage entries so enabling a section needs zero code                                 | 2026-08-24 |
 | AD-18 | Booking wizard keeps availability client side per seven day chunk keyed by selection signature          | Schema caps dateKeys at seven per call; cache misses on service/barber/refresh change replace cache clearing effects (no sync setState); slot chips derive HH:MM from engine startMinute, never from epoch arithmetic         | 2026-08-24 |
 | AD-19 | Race test pins one barber instead of ANY                                                                | Two ANY racers can legitimately each win a different chair once one transaction's busy read lands after the other's commit; the exclusion constraint only arbitrates colliding ranges on the same barber                      | 2026-08-24 |
-| AD-20 | Staff reschedule skips customer notice rules on purpose; staff status changes follow a TRANSITIONS map   | Owners move appointments freely (capacity probe plus exclusion constraint still arbitrate) while confirm/complete/noShow/cancel only apply from their legal source statuses, returning STATE_CONFLICT otherwise               | 2026-08-24 |
+| AD-20 | Staff reschedule skips customer notice rules on purpose; staff status changes follow a TRANSITIONS map  | Owners move appointments freely (capacity probe plus exclusion constraint still arbitrate) while confirm/complete/noShow/cancel only apply from their legal source statuses, returning STATE_CONFLICT otherwise               | 2026-08-24 |
 
 ---
 
 ## Changelog
+
+### 2026-08-24 (session 15)
+
+- Phase 10 shop configuration admin complete:
+  - src/db/repositories/shop-config.ts: services CRUD plus display order rewrite, barbers CRUD with wholesale service assignment via barber_services, hours replace-all per scope (shop or single barber) in one transaction, breaks and closures create/delete, booking rules and shop profile updates; hard deletes gated on zero appointment references since appointments FKs are ON DELETE RESTRICT (IN_USE returned instead)
+  - src/lib/validation/admin.ts: authored input shapes mirroring the JSONB column contracts; LocalizedInput requires en, optional ne collapses to undefined so resolveLocalizedText fallback keeps working
+  - src/lib/admin/settings-actions.ts ("use server"): zod validated mutations returning SettingsActionResult discriminated unions; saveScheduleAction rejects overlapping intervals per weekday server side even though the client also sorts them
+  - Settings hub at /admin/settings with five cards: services, barbers, schedule, rules, general; AdminNav gains the settings tab
+  - Services manager: inline editor card (en/ne name, description, duration, buffer, paisa price), activate/deactivate, up/down reorder through full id list submit, two step delete confirm with IN_USE explanation
+  - Barbers manager: cards with initials avatar, bio in en/ne, service chips as toggle checkboxes persisted through setBarberServices replace-all
+  - Schedule page: scope switcher (?scope=shop or barber id), seven weekday rows of time interval pairs with add/remove, closed label when empty, key={scopeId} remounts local draft when switching scope; breaks section (weekly weekday picker or one-off date, time range, reason, barber scope select) and closures section (date range, full day vs partial with times)
+  - Booking rules form edits the existing bookingRulesSchema fields incl. optional daily cap left empty for unlimited; general form covers shop identity strings, contact JSONB, location JSONB, social links JSONB (blank inputs collapse to undefined keys)
+  - Shared client helpers in components/admin/settings-bits.tsx: LocalizedField, Field, SaveBar, useSettingsSubmit wrapping pending/saved/error state around direct server action calls
+- Dictionaries: admin.settings block fully expanded in en, ne mirror complete including weekday reuse from top level weekdays.long*
+- Verified live against dev server: all six settings routes return 200 signed-in in en and ne; schedule renders shop scope and barber scope (200); anonymous still redirects 307
+- All checks green: format, lint, typecheck, 93 tests
 
 ### 2026-08-24 (session 14)
 

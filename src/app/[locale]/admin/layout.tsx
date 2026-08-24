@@ -35,6 +35,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           { href: `/${locale}/admin`, label: t("admin.nav.dashboard") },
           { href: `/${locale}/admin/calendar`, label: t("admin.nav.calendar") },
           { href: `/${locale}/admin/customers`, label: t("admin.nav.customers") },
+          { href: `/${locale}/admin/settings`, label: t("admin.settings.title") },
         ]}
       />
 

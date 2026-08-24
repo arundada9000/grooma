@@ -103,7 +103,9 @@ async function CustomerListItem({
             name={customer.name}
             phone={customer.phone}
             visitsLabel={t(
-              customer.visitCount === 1 ? "admin.customersPage.visits_one" : "admin.customersPage.visits_other",
+              customer.visitCount === 1
+                ? "admin.customersPage.visits_one"
+                : "admin.customersPage.visits_other",
               { count: customer.visitCount },
             )}
             lastSeenLabel={
