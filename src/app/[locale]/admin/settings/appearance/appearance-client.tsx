@@ -38,6 +38,21 @@ interface BrandingDraft {
   faviconUrl: string;
 }
 
+interface ContrastWarning {
+  pair: string;
+  scheme: "light" | "dark";
+  ratio: number;
+  minimum: number;
+}
+
+const PAIR_LABEL_KEYS: Record<string, string> = {
+  "label on background": "labelOnBackground",
+  "label secondary on background": "labelSecondaryOnBackground",
+  "on accent": "onAccent",
+  "accent on background": "accentOnBackground",
+  "on destructive": "onDestructive",
+};
+
 export function AppearanceEditor({
   initial,
   presets,
@@ -271,9 +286,46 @@ export function AppearanceEditor({
         pending={submit.pending}
         justSaved={submit.justSaved}
         error={submit.error}
+        warnings={
+          submit.warnings.length === 0 ? null : (
+            <ul className="text-warning space-y-1">
+              {submit.warnings.map((warning, index) => (
+                <WarningRow
+                  key={`${warning.scheme}-${warning.pair}-${index}`}
+                  warning={warning}
+                  labels={labels}
+                />
+              ))}
+            </ul>
+          )
+        }
       />
     </form>
   );
+}
+
+function WarningRow({
+  warning,
+  labels,
+}: {
+  warning: ContrastWarning;
+  labels: Record<string, string>;
+}) {
+  const pairKey = PAIR_LABEL_KEYS[warning.pair];
+  return (
+    <li className="text-[13px] leading-relaxed">
+      {renderTemplate(labels.contrastWarning, {
+        scheme: labels[`schemes_${warning.scheme}`] ?? warning.scheme,
+        pair: (pairKey ? labels[`contrastPairs_${pairKey}`] : undefined) ?? warning.pair,
+        ratio: String(warning.ratio),
+        minimum: String(warning.minimum),
+      })}
+    </li>
+  );
+}
+
+function renderTemplate(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key: string) => vars[key] ?? `{${key}}`);
 }
 
 function omitKey(

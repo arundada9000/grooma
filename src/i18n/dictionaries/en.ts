@@ -409,6 +409,18 @@ export const en = {
         logoUrl: "Logo URL",
         faviconUrl: "Favicon URL",
         previewNote: "Preview is live; press save to keep it.",
+        contrastWarning: "Low contrast in {scheme}: {pair} measures {ratio}:1, needs {minimum}:1.",
+        contrastPairs: {
+          labelOnBackground: "body text on the background",
+          labelSecondaryOnBackground: "secondary text on the background",
+          onAccent: "text on accent buttons",
+          accentOnBackground: "the accent against the background",
+          onDestructive: "text on delete buttons",
+        },
+        schemes: {
+          light: "light mode",
+          dark: "dark mode",
+        },
       },
       homepage: {
         hint: "Services, barbers, hours, location and contact pull live from your catalog and general settings.",

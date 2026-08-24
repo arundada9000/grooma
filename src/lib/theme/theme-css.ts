@@ -29,11 +29,28 @@ const COLOR_KEYS: Array<{ key: keyof ThemeColors; css: string }> = [
   { key: "success", css: "success" },
   { key: "warning", css: "warning" },
 ];
-
 export interface CustomThemeOverrides {
   light?: Partial<ThemeColors>;
   dark?: Partial<ThemeColors>;
   style?: ScaleStyleId;
+}
+
+/** Effective palettes after merging custom overrides over the preset. */
+export function resolvePalettes(branding: {
+  presetId?: string;
+  customTheme?: CustomThemeOverrides;
+}): { light: ThemeColors; dark: ThemeColors } {
+  const preset = getPreset(branding.presetId);
+  const custom = branding.customTheme ?? {};
+  const light = { ...preset.light };
+  const dark = { ...preset.dark };
+  for (const { key } of COLOR_KEYS) {
+    const lightOverride = custom.light?.[key];
+    if (lightOverride) light[key] = lightOverride;
+    const darkOverride = custom.dark?.[key];
+    if (darkOverride) dark[key] = darkOverride;
+  }
+  return { light, dark };
 }
 
 export function buildThemeStyle(branding: {
@@ -48,17 +65,9 @@ export function buildThemeStyle(branding: {
   const scale =
     custom.style && custom.style in SCALE_STYLES ? SCALE_STYLES[custom.style] : preset.scale;
 
-  const light = { ...preset.light };
-  const dark = { ...preset.dark };
-  for (const { key } of COLOR_KEYS) {
-    const lightOverride = custom.light?.[key];
-    if (lightOverride) light[key] = lightOverride;
-    const darkOverride = custom.dark?.[key];
-    if (darkOverride) dark[key] = darkOverride;
-  }
+  const { light, dark } = resolvePalettes(branding);
 
   const style: Record<string, string> = {};
-
   for (const { key, css } of COLOR_KEYS) {
     style[`--tl-${css}`] = light[key];
     style[`--td-${css}`] = dark[key];

@@ -73,6 +73,20 @@ export default async function AdminAppearanceSettingsPage() {
           logoUrl: t("admin.settings.appearance.logoUrl"),
           faviconUrl: t("admin.settings.appearance.faviconUrl"),
           previewNote: t("admin.settings.appearance.previewNote"),
+          contrastWarning: t("admin.settings.appearance.contrastWarning"),
+          contrastPairs_labelOnBackground: t(
+            "admin.settings.appearance.contrastPairs.labelOnBackground",
+          ),
+          contrastPairs_labelSecondaryOnBackground: t(
+            "admin.settings.appearance.contrastPairs.labelSecondaryOnBackground",
+          ),
+          contrastPairs_onAccent: t("admin.settings.appearance.contrastPairs.onAccent"),
+          contrastPairs_accentOnBackground: t(
+            "admin.settings.appearance.contrastPairs.accentOnBackground",
+          ),
+          contrastPairs_onDestructive: t("admin.settings.appearance.contrastPairs.onDestructive"),
+          schemes_light: t("admin.settings.appearance.schemes.light"),
+          schemes_dark: t("admin.settings.appearance.schemes.dark"),
           error_INVALID_INPUT: t("admin.settings.error_INVALID_INPUT"),
           error_GENERIC: t("admin.settings.error_GENERIC"),
         }}

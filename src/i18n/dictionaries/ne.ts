@@ -349,6 +349,18 @@ export const ne: DeepPartial<Dictionary> = {
         logoUrl: "लोगो URL",
         faviconUrl: "फेभिकन URL",
         previewNote: "प्रिभ्यू तुरुन्तै देखिन्छ; राख्न सुरक्षित गर्नुहोस्।",
+        contrastWarning: "{scheme} मा कम कन्ट्रास्ट: {pair} {ratio}:1 मात्र, {minimum}:1 चाहिन्छ।",
+        contrastPairs: {
+          labelOnBackground: "पृष्ठभूमिमा मुख्य पाठ",
+          labelSecondaryOnBackground: "पृष्ठभूमिमा दोस्रो पाठ",
+          onAccent: "एक्सेन्ट बटनको पाठ",
+          accentOnBackground: "पृष्ठभूमिविरुद्ध एक्सेन्ट",
+          onDestructive: "मेट्ने बटनको पाठ",
+        },
+        schemes: {
+          light: "उज्यालो मोड",
+          dark: "अँध्यारो मोड",
+        },
       },
       homepage: {
         hint: "सेवा, नाइँ, घण्टा, ठेगाना र सम्पर्क सूची तपाईंको क्याटालग र सामान्य सेटिङबाट स्वतः आउँछ।",

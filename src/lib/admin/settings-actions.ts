@@ -15,6 +15,8 @@ import {
   shopProfileInputSchema,
 } from "@/lib/validation/admin";
 import { brandingConfigSchema, homepageConfigSchema } from "@/lib/validation/shop-config";
+import { checkPalette } from "@/lib/theme/contrast";
+import { resolvePalettes } from "@/lib/theme/theme-css";
 import {
   countBarberAppointments,
   countServiceAppointments,
@@ -275,20 +277,44 @@ const brandingInputSchema = brandingConfigSchema.extend({
   faviconUrl: z.union([z.url().max(500), z.literal("")]).optional(),
 });
 
-/** Whole-object replace; the client always sends the complete draft. */
-export async function saveBrandingAction(raw: unknown): Promise<SettingsActionResult> {
+export type BrandingResult =
+  | {
+      ok: true;
+      warnings: { pair: string; scheme: "light" | "dark"; ratio: number; minimum: number }[];
+    }
+  | { ok: false; code: "INVALID_INPUT" | "GENERIC" };
+
+/**
+ * Whole-object replace; the client always sends the complete draft.
+ * The merged palette is contrast checked (WCAG via checkPalette); the
+ * save still succeeds but carries warnings the UI can surface.
+ */
+export async function saveBrandingAction(raw: unknown): Promise<BrandingResult> {
   await requireOwner();
   const shop = await getShopContext();
   const parsed = brandingInputSchema.safeParse(raw);
   if (!parsed.success) return { ok: false, code: "INVALID_INPUT" };
-  const { logoUrl, faviconUrl, ...rest } = parsed.data;
-  await updateBranding(shop.id, {
+  const { logoUrl, faviconUrl, customTheme, ...rest } = parsed.data;
+  const branding = {
     ...rest,
     ...(logoUrl ? { logoUrl } : {}),
     ...(faviconUrl ? { faviconUrl } : {}),
-  });
+    ...(customTheme ? { customTheme } : {}),
+  };
+  await updateBranding(shop.id, branding);
+
+  const { light, dark } = resolvePalettes({ presetId: branding.presetId, customTheme });
+  const warnings = [...checkPalette(light, "light"), ...checkPalette(dark, "dark")].map(
+    ({ pair, ratio, minimum }) => ({
+      // Strip the "(scheme)" suffix checkPalette appends; scheme is explicit here.
+      pair: pair.replace(/\s*\((?:light|dark)\)$/, ""),
+      scheme: pair.endsWith("(dark)") ? ("dark" as const) : ("light" as const),
+      ratio,
+      minimum,
+    }),
+  );
   revalidateSettings();
-  return { ok: true };
+  return { ok: true, warnings };
 }
 
 /**

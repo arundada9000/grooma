@@ -14,7 +14,7 @@ Last updated: 2026-08-24 (phase 8 public customer experience)
 |                   |                                                                                           |
 | ----------------- | ----------------------------------------------------------------------------------------- |
 | Phase in progress | None                                                                                      |
-| Next up           | Phase 11 leftovers: builder contrast validation, section content model                    |
+| Next up           | Phase 11 leftovers: homepage section content model, per-locale content                    |
 | Blocking items    | Preview deployment check waits until the repo is pushed to GitHub and connected to Vercel |
 
 ---
@@ -177,7 +177,7 @@ Status values: `not-started`, `in-progress`, `done`
 
 - [x] Preset picker with live preview
 - [x] Custom theme builder: colors, fonts, radius, style
-- [ ] Contrast validation in builder
+- [x] Contrast validation in builder
 - [ ] Homepage section editor: enable, reorder, content, images (enable + reorder done; content/images wait on the content model)
 - [ ] Per-locale homepage section content
 
@@ -250,6 +250,14 @@ Status values: `not-started`, `in-progress`, `done`
 ---
 
 ## Changelog
+
+### 2026-08-24 (session 17)
+
+- Contrast validation wired into the theme builder:
+  - theme-css.ts exports resolvePalettes (override merge shared by buildThemeStyle and the action)
+  - saveBrandingAction returns BrandingResult with warnings from checkPalette over both merged schemes; pair strings are stripped of their scheme suffix and returned structured
+  - useSettingsSubmit captures warnings from ok results; SaveBar renders a warning slot; appearance editor maps pairs/schemes through new dictionary keys (contrastWarning template, five contrastPairs, two schemes) in en and ne
+- All checks green: format, lint, typecheck, 95 tests; appearance page re-verified live
 
 ### 2026-08-24 (session 16)
 
