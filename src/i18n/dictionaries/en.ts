@@ -513,6 +513,21 @@ export const en = {
       "One of our clippers tripped a fuse mid-cut. Give it another go; no charge for the pause.",
     retry: "Try again",
   },
+  pwa: {
+    offlineEyebrow: "OFFLINE",
+    offlineTitle: "You're offline.",
+    offlineBody: "Booking needs an internet connection, so nothing new can be booked right now.",
+    offlineAction: "Back home",
+    offlineNote: "Pages you already opened may still be readable from the cache.",
+    offlineBanner: "You're offline. Booking requires an internet connection.",
+    installTitle: "Install Grooma",
+    installBody: "Add the shop to your home screen for a faster, app-like visit.",
+    installCta: "Install",
+    installDismiss: "Not now",
+    iosHintTitle: "Install Grooma on iPhone",
+    iosHintBody:
+      "Tap the Share button in Safari, then choose “Add to Home Screen” for the full-screen app.",
+  },
 };
 
 export type Dictionary = typeof en;

@@ -452,4 +452,19 @@ export const ne: DeepPartial<Dictionary> = {
     subtitle: "क्लिपरले बीचमै फुस तान्यो। फेरि प्रयास गर्नुहोस्, रोक्काको शुल्क छैन।",
     retry: "फेरि प्रयास",
   },
+  pwa: {
+    offlineEyebrow: "अफलाइन",
+    offlineTitle: "तपाईं अफलाइन हुनुहुन्छ।",
+    offlineBody: "बुकिङका लागि इन्टरनेट जडान चाहिन्छ, त्यसैले अहिले नयाँ बुक गर्न मिल्दैन।",
+    offlineAction: "गृहपृष्ठमा फर्कने",
+    offlineNote: "पहिले खोलेका पृष्ठहरू क्यासबाट पढ्न सकिन्छ।",
+    offlineBanner: "तपाईं अफलाइन हुनुहुन्छ। बुकिङका लागि इन्टरनेट जडान आवश्यक छ।",
+    installTitle: "Grooma इन्स्टल गर्ने",
+    installBody: "पसललाई होम स्क्रिनमा राख्दा छिटो, एपजस्तो अनुभव मिल्छ।",
+    installCta: "इन्स्टल",
+    installDismiss: "अहिले होइन",
+    iosHintTitle: "iPhone मा Grooma इन्स्टल गर्ने",
+    iosHintBody:
+      "Safari मा रहेको Share बटन थिच्नुहोस्, त्यसपछि “Add to Home Screen” रोज्नुहोस् — पूरा स्क्रिनको एप सरहमा चल्नेछ।",
+  },
 };

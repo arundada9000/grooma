@@ -5,7 +5,7 @@ Plan reference: `docs/IMPLEMENTATION_PLAN.md`
 
 Project: Grooma (barber appointment system)
 Started: 2026-08-23
-Last updated: 2026-08-24 (phase 12 complete: notifications)
+Last updated: 2026-08-24 (phase 13 complete: PWA)
 
 ---
 
@@ -38,7 +38,7 @@ Status values: `not-started`, `in-progress`, `done`
 | 10  | Shop configuration admin               | done        | Services, barbers, schedules, breaks, closures, rules                     |
 | 11  | Theme and homepage customization admin | done        | Theme editor, homepage section editor                                     |
 | 12  | Notifications                          | done        | Provider-independent service, inbox, Resend templates                     |
-| 13  | PWA                                    | not-started | Manifest, Serwist, offline shell, iOS meta                                |
+| 13  | PWA                                    | done        | Custom SW (Turbopack), manifest, icons, offline shell                     |
 | 14  | SEO, AEO, GEO                          | not-started | Metadata, JSON-LD, hreflang, sitemap, robots                              |
 | 15  | Hardening, testing, performance polish | not-started | E2E suites, a11y audit, CWV                                               |
 
@@ -192,12 +192,12 @@ Status values: `not-started`, `in-progress`, `done`
 
 ### Phase 13: PWA
 
-- [ ] Web manifest with maskable icons and shortcuts
-- [ ] Serwist service worker and offline shell
-- [ ] Offline messaging that never fakes booking success
-- [ ] Android install prompt guidance
-- [ ] iOS Apple touch icon, standalone meta, safe areas
-- [ ] Theme color synced from shop branding
+- [x] Web manifest with maskable icons and shortcuts
+- [x] Service worker and offline shell (hand-rolled; Serwist skipped per AD-23)
+- [x] Offline messaging that never fakes booking success
+- [x] Android install prompt guidance (beforeinstallprompt banner)
+- [x] iOS Apple touch icon, standalone meta, safe areas, legacy capable meta
+- [x] Theme color synced from shop branding
 
 ### Phase 14: SEO, AEO, GEO
 
@@ -247,11 +247,25 @@ Status values: `not-started`, `in-progress`, `done`
 | AD-19 | Race test pins one barber instead of ANY                                                                                                                      | Two ANY racers can legitimately each win a different chair once one transaction's busy read lands after the other's commit; the exclusion constraint only arbitrates colliding ranges on the same barber                                                                                                        | 2026-08-24 |
 | AD-20 | Staff reschedule skips customer notice rules on purpose; staff status changes follow a TRANSITIONS map                                                        | Owners move appointments freely (capacity probe plus exclusion constraint still arbitrate) while confirm/complete/noShow/cancel only apply from their legal source statuses, returning STATE_CONFLICT otherwise                                                                                                 | 2026-08-24 |
 | AD-21 | Homepage content is a discriminated union of strict per-type Zod records; unknown keys stripped, caps enforced, blank localized fields collapse away on input | Storage stays forward compatible (older rows parse, new types default to empty content), the renderer can switch exhaustively per type, and editor drafts round trip through a laxer input schema whose output always satisfies the storage contract (unit tested)                                              | 2026-08-24 |
-| AD-22 | Notification dispatch never throws; admin in-app rows only for booked/cancelled/rescheduled while every kind emails the customer when an address exists       | Booking mutations must not fail because a notification did; spec section 37 lists new/cancel/reschedule as owner-relevant and confirmations as customer-only. Console provider in dev, fetch-based Resend behind RESEND_API_KEY. MutationMeta mirrors AppointmentEventData so action call sites spread directly | 2026-08-24 |
+| AD-22 | Notification dispatch never throws; admin in-app rows only for booked/cancelled/rescheduled while every kind emails the customer when an address exists      | Booking mutations must not fail because a notification did; spec section 37 lists new/cancel/reschedule as owner-relevant and confirmations as customer-only. Console provider in dev, fetch-based Resend behind RESEND_API_KEY. MutationMeta mirrors AppointmentEventData so action call sites spread directly                                                                                                                              | 2026-08-24 |
+| AD-23 | Hand-rolled public/sw.js instead of Serwist; navigations network-first with offline shell fallback, static assets cache-first, everything else untouched      | Next 16 builds run on Turbopack by default while @serwist/next is webpack-only; the plan names a minimal custom SW as the sanctioned fallback. Registering only in production keeps HMR clean. RSC payloads and non-GET requests are never intercepted, and the worker can never fake a booking success                                                                                        | 2026-08-24 |
 
 ---
 
 ## Changelog
+
+### 2026-08-24 (session 20)
+
+- Phase 13 PWA complete:
+  - Icons: scripts/generate-icons.mjs renders the barber-pole mark with a zero-dependency PNG encoder (zlib + hand CRC32, analytic rounded-rect SDF and diagonal stripes with 3x3 supersampling); outputs committed under public/icons: icon-48/192/512 (rounded badge), maskable-192/512 (full-bleed bg, art inside the maskable safe circle), apple-touch-icon 180
+  - Manifest: src/lib/pwa/manifest.ts pure builder (shop name leads per plan line 16, theme/background colors from resolvePalettes so installed apps match live branding, four icons incl. two maskable, spec-41 shortcuts Book appointment / My appointment) served request-time by src/app/manifest.ts with fallbackManifest when the database is down; unit tested (4 cases)
+  - Service worker public/sw.js (AD-23): precaches /en/offline + /ne/offline at install; navigations network-first falling back to the locale-matched offline shell; /_next/static and /icons cache-first fill-on-miss; RSC payloads, API routes and all non-GET requests pass through untouched; versioned cache with activate cleanup; SwRegister client component registers it in production only
+  - Offline honesty (spec 83): /[locale]/offline page reuses ErrorSurface with noindex and new pwa.* dictionary keys in en and ne; useOnline via useSyncExternalStore (server snapshot assumes online); OfflineBanner shown above the wizard confirm step and manage actions, with confirm/reschedule/cancel buttons disabled while offline — a booking can never silently fail or fake success
+  - Install experiences: InstallPrompt captures beforeinstallprompt for Android's native sheet; iOS Safari gets a static Share-sheet hint after 2.5s; both dismissible for 30 days, hidden when already standalone; mounted in the public layout only
+  - Layout metadata: generateViewport now derives light/dark theme-color from shop branding (baseline fallback); appleWebApp meta plus legacy apple-mobile-web-app-capable (Next 16 emits only mobile-web-app-capable; pre-17.4 iOS reads the old name)
+- Verified live on dev server: /manifest.webmanifest serves application/manifest+json with the live shop brand and Midnight palette (owner had switched presets — request-time branding confirmed end to end), icon route 200 image/png at exact byte size, sw.js served, offline pages 200 in both locales with correct copy, theme-color metas match live branding, manifest link auto-injected, all apple metas present
+- Lighthouse PWA run and real-device install QA deferred to phase 15 (needs HTTPS deploy or Chrome flags on localhost); noted in tracker
+- All checks green: format, lint, typecheck, 124 tests
 
 ### 2026-08-24 (session 19b)
 

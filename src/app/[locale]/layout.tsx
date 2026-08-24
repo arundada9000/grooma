@@ -10,8 +10,9 @@ import {
   Playfair_Display,
 } from "next/font/google";
 import { getShopContext } from "@/lib/tenant";
-import { buildThemeStyle } from "@/lib/theme/theme-css";
+import { buildThemeStyle, resolvePalettes } from "@/lib/theme/theme-css";
 import { InlineScript } from "@/components/inline-script";
+import { SwRegister } from "@/components/pwa/sw-register";
 import { LocaleProvider } from "@/i18n/client";
 import { getLocale, getTranslator } from "@/i18n/server";
 import { isLocale } from "@/i18n/config";
@@ -58,19 +59,49 @@ export async function generateMetadata(): Promise<Metadata> {
       template: t("meta.titleTemplate"),
     },
     description: t("meta.description"),
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+      title: "Grooma",
+    },
+    // Next 16 emits only mobile-web-app-capable; pre-17.4 iOS still
+    // reads the legacy name (spec 40).
+    other: {
+      "apple-mobile-web-app-capable": "yes",
+    },
+    icons: {
+      icon: [{ url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" }],
+      apple: "/icons/apple-touch-icon.png",
+    },
   };
 }
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 5,
-  viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f2f2f7" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
-  ],
-};
+/**
+ * Theme color follows the shop's live branding (spec: theme color sync
+ * from shop data), falling back to the baseline surfaces.
+ */
+export async function generateViewport(): Promise<Viewport> {
+  let light = "#f2f2f7";
+  let dark = "#000000";
+  try {
+    const shop = await getShopContext();
+    const palettes = resolvePalettes(shop.branding);
+    light = palettes.light.background;
+    dark = palettes.dark.background;
+  } catch {
+    // Baseline values above keep the app correct without a database.
+  }
+  return {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    viewportFit: "cover",
+    themeColor: [
+      { media: "(prefers-color-scheme: light)", color: light },
+      { media: "(prefers-color-scheme: dark)", color: dark },
+    ],
+  };
+}
 
 /**
  * Resolves the active shop's branding and converts it to inline theme
@@ -105,6 +136,7 @@ export default async function RootLayout({ children }: LayoutProps<"/[locale]">)
       <body className="flex min-h-full flex-col">
         <InlineScript html={SCHEME_SCRIPT} />
         <LocaleProvider locale={locale}>{children}</LocaleProvider>
+        <SwRegister />
       </body>
     </html>
   );

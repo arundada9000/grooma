@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { getShopContext } from "@/lib/tenant";
 import { SiteFooter, SiteHeader } from "@/components/site/site-header";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
 
 /**
  * Chrome for customer facing pages. Admin and sign-in keep their own
@@ -14,6 +15,7 @@ export default async function PublicLayout({ children }: { children: ReactNode }
       <SiteHeader shopName={shop.name} shortName={shop.shortName} />
       <main className="mx-auto w-full max-w-3xl flex-1">{children}</main>
       <SiteFooter shopName={shop.name} />
+      <InstallPrompt />
     </>
   );
 }

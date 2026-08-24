@@ -8,6 +8,8 @@ import { minuteOfDayToHHMM } from "@/lib/scheduling/format";
 import type { Locale } from "@/i18n/config";
 import type { BookingErrorCode } from "@/lib/booking/types";
 import { cancelBookingAction, rescheduleBookingAction } from "@/lib/booking/actions";
+import { OfflineBanner } from "@/components/pwa/offline-banner";
+import { useOnline } from "@/components/pwa/use-online";
 import { SlotPicker, type SlotPickerLabels } from "@/components/book/slot-picker";
 
 /**
@@ -49,6 +51,7 @@ export function ManageActions(props: ManageActionsProps) {
   const [busy, setBusy] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [refreshSignal, setRefreshSignal] = useState(0);
+  const online = useOnline();
 
   if (!canModify && mode === "idle") return null;
 
@@ -73,6 +76,7 @@ export function ManageActions(props: ManageActionsProps) {
 
   return (
     <div className="mt-5">
+      <OfflineBanner className="mb-4" />
       {banner ? (
         <p
           role="alert"
@@ -86,10 +90,12 @@ export function ManageActions(props: ManageActionsProps) {
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
+            disabled={!online}
             onClick={() => setMode(mode === "reschedule" ? "idle" : "reschedule")}
             className={cn(
               "inline-flex h-11 items-center rounded-full px-6 text-[15px] font-medium",
               "transition-transform duration-150 ease-out active:scale-[0.96]",
+              "disabled:pointer-events-none disabled:opacity-40",
               mode === "reschedule" ? "bg-accent text-on-accent" : "bg-accent-soft text-accent",
             )}
           >
@@ -97,10 +103,12 @@ export function ManageActions(props: ManageActionsProps) {
           </button>
           <button
             type="button"
+            disabled={!online}
             onClick={() => setMode(mode === "cancel" ? "idle" : "cancel")}
             className={cn(
               "inline-flex h-11 items-center rounded-full px-6 text-[15px] font-medium",
               "transition-transform duration-150 ease-out active:scale-[0.96]",
+              "disabled:pointer-events-none disabled:opacity-40",
               mode === "cancel"
                 ? "bg-destructive text-on-destructive"
                 : "border-separator text-destructive border",
@@ -130,7 +138,7 @@ export function ManageActions(props: ManageActionsProps) {
           />
           <button
             type="button"
-            disabled={dateKey == null || startMinute == null || busy}
+            disabled={dateKey == null || startMinute == null || busy || !online}
             onClick={() =>
               void runMutation(() =>
                 rescheduleBookingAction({
@@ -158,7 +166,7 @@ export function ManageActions(props: ManageActionsProps) {
           <div className="mt-4 flex gap-3">
             <button
               type="button"
-              disabled={busy}
+              disabled={busy || !online}
               onClick={() => void runMutation(() => cancelBookingAction({ token }))}
               className="bg-destructive text-on-destructive inline-flex h-10 items-center rounded-full px-5 text-sm font-medium transition-transform duration-150 ease-out active:scale-[0.96] disabled:pointer-events-none disabled:opacity-50"
             >

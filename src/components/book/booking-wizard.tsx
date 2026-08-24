@@ -9,6 +9,8 @@ import type { Locale } from "@/i18n/config";
 import { formatCurrency, formatDateTime } from "@/i18n/format";
 import type { BookingErrorCode } from "@/lib/booking/types";
 import { createBookingAction } from "@/lib/booking/actions";
+import { OfflineBanner } from "@/components/pwa/offline-banner";
+import { useOnline } from "@/components/pwa/use-online";
 import { SlotPicker, type SlotPickerLabels } from "./slot-picker";
 
 /**
@@ -109,6 +111,7 @@ export function BookingWizard(props: BookingWizardProps) {
   const [banner, setBanner] = useState<{ title: string; message: string } | null>(null);
   const [refreshSignal, setRefreshSignal] = useState(0);
   const [confirmedToken, setConfirmedToken] = useState<string | null>(null);
+  const online = useOnline();
 
   const service = services.find((item) => item.id === serviceId) ?? null;
   const eligibleBarbers = serviceId != null ? (barbersByService[serviceId] ?? []) : [];
@@ -424,10 +427,11 @@ export function BookingWizard(props: BookingWizardProps) {
       ) : null}
 
       {step === 4 ? (
-        <div className="mt-8">
+        <div className="mt-8 space-y-3">
+          <OfflineBanner />
           <button
             type="button"
-            disabled={submitting}
+            disabled={submitting || !online}
             onClick={() => void handleConfirm()}
             className={cn(
               "bg-accent text-on-accent inline-flex h-12 w-full items-center justify-center rounded-full px-6 text-base font-medium",
