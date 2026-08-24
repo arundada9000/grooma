@@ -1,5 +1,6 @@
+import { ErrorSurface } from "@/components/error-surface";
 import { getLocale } from "@/i18n/server";
-import { NotFoundContent } from "./not-found-content";
+import { translate } from "@/i18n/resolve";
 
 export default async function NotFound() {
   let locale = "en";
@@ -8,5 +9,13 @@ export default async function NotFound() {
   } catch {
     // Layout already validated the segment; keep English on any edge case.
   }
-  return <NotFoundContent locale={locale} />;
+  return (
+    <ErrorSurface
+      eyebrow="404"
+      title={translate(locale, "notFound.title")}
+      subtitle={translate(locale, "notFound.subtitle")}
+      actionLabel={translate(locale, "notFound.action")}
+      actionHref={`/${locale}`}
+    />
+  );
 }

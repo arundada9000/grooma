@@ -15,6 +15,7 @@ import { InlineScript } from "@/components/inline-script";
 import { LocaleProvider } from "@/i18n/client";
 import { getLocale, getTranslator } from "@/i18n/server";
 import { isLocale } from "@/i18n/config";
+import { SCHEME_SCRIPT } from "@/lib/scheme-script";
 import { notFound } from "next/navigation";
 import "../globals.css";
 
@@ -71,9 +72,6 @@ export const viewport: Viewport = {
   ],
 };
 
-/** Applies the stored or system color scheme before first paint. */
-const schemeScript = `(function(){try{var s=localStorage.getItem("grooma.scheme");var d=s?s==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;if(d)document.documentElement.classList.add("dark")}catch(e){}})();`;
-
 /**
  * Resolves the active shop's branding and converts it to inline theme
  * variables. Falls back to the baseline palette when no database is
@@ -105,7 +103,7 @@ export default async function RootLayout({ children }: LayoutProps<"/[locale]">)
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">
-        <InlineScript html={schemeScript} />
+        <InlineScript html={SCHEME_SCRIPT} />
         <LocaleProvider locale={locale}>{children}</LocaleProvider>
       </body>
     </html>

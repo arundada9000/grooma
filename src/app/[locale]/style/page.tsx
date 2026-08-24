@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { BarberPole } from "@/components/ui/barber-pole";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -238,6 +239,34 @@ export default function StylePage() {
 
         <Section title="Toasts" description="Transient status at the top, below safe areas.">
           <ToastDemo />
+        </Section>
+
+        <Section
+          title="Error surfaces"
+          description="Barber pole and shared error card behind the 404 pages and boundaries. Try /nope to see one live."
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Card>
+              <CardContent className="flex items-end justify-center gap-6 py-8">
+                <BarberPole className="h-16 w-4" />
+                <BarberPole className="h-24 w-5" />
+                <BarberPole className="h-32 w-7" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
+                <p className="text-destructive bg-destructive-soft rounded-full px-3 py-1 font-mono text-xs font-medium tracking-[0.25em] uppercase">
+                  404
+                </p>
+                <p className="text-label max-w-[220px] text-lg font-semibold tracking-tight text-balance">
+                  This page isn&apos;t on the menu.
+                </p>
+                <p className="text-label-secondary max-w-[240px] text-sm leading-relaxed">
+                  It must have left with the clippings.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </Section>
 
         <Section title="Feedback states">

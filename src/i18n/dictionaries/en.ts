@@ -36,13 +36,15 @@ export const en = {
     signOut: "Sign out",
   },
   notFound: {
-    title: "This cut isn't on the menu.",
-    subtitle: "The page you're after slipped out with the clippings.",
-    action: "Back to the shop",
+    title: "This page isn't on the menu.",
+    subtitle:
+      "It must have left with the clippings. The shop, however, is right where you left it.",
+    action: "Back to the chair",
   },
   errorPage: {
-    title: "Something went wrong",
-    subtitle: "Our clippers hit a snag. Give it another go.",
+    title: "Snagged the wire.",
+    subtitle:
+      "One of our clippers tripped a fuse mid-cut. Give it another go; no charge for the pause.",
     retry: "Try again",
   },
 };

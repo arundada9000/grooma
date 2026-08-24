@@ -5,7 +5,7 @@ Plan reference: `docs/IMPLEMENTATION_PLAN.md`
 
 Project: Grooma (barber appointment system)
 Started: 2026-08-23
-Last updated: 2026-08-23 (phase 5 complete)
+Last updated: 2026-08-24 (error surfaces rebuilt)
 
 ---
 
@@ -243,6 +243,19 @@ Status values: `not-started`, `in-progress`, `done`
 ---
 
 ## Changelog
+
+### 2026-08-24 (session 10)
+
+- Rebuilt the barber themed error surfaces from scratch (previous session ran out of tokens and the commit was finished by another model):
+  - BarberPole redesigned as a wall mounted pole: inset mounting caps, card shadow core, glass sheen strip; still token only, still seamless, still frozen by reduced motion
+  - New shared ErrorSurface component: one card composition (pole, mono eyebrow badge, title, subtitle, hairline, single action) used by all four boundaries; entrance uses the stagger utility
+  - Copy rewritten in en and ne with more personality: "This page isn't on the menu." / "Snagged the wire." plus Nepali equivalents
+  - Added the missing global-error.tsx so root layout crashes match the aesthetic instead of the stock page; owns html/body, loads the token stylesheet and Geist, offers retry and shows the digest ref
+  - global-not-found.tsx now imports globals.css and loads Geist and Geist Mono itself; as a layout bypassing document it received no styles before, which shipped an unstyled 404
+  - Extracted the duplicated pre paint scheme script into src/lib/scheme-script.ts, now shared by [locale] layout, global-not-found and global-error
+  - /style showcase gained an Error surfaces section with three pole sizes and a mini 404 preview
+- Verified live: /aa, /en/nope, /ne/nope all return the styled custom 404 with stylesheet attached; a temporary throwing route proved the [locale] boundary ships its full ErrorSurface tree for client side render (thrown server errors hydrate the boundary per React streaming semantics); production build green including both standalone documents
+- All checks green: format, lint, typecheck, 36 tests passing, production build
 
 ### 2026-08-23 (session 9)
 
