@@ -5,7 +5,7 @@ Plan reference: `docs/IMPLEMENTATION_PLAN.md`
 
 Project: Grooma (barber appointment system)
 Started: 2026-08-23
-Last updated: 2026-08-24 (error surfaces rebuilt)
+Last updated: 2026-08-24 (phase 6 scheduling engine)
 
 ---
 
@@ -14,7 +14,7 @@ Last updated: 2026-08-24 (error surfaces rebuilt)
 |                   |                                                                                           |
 | ----------------- | ----------------------------------------------------------------------------------------- |
 | Phase in progress | None                                                                                      |
-| Next up           | Phase 6: scheduling engine                                                                |
+| Next up           | Phase 7: booking pipeline                                                                 |
 | Blocking items    | Preview deployment check waits until the repo is pushed to GitHub and connected to Vercel |
 
 ---
@@ -31,7 +31,7 @@ Status values: `not-started`, `in-progress`, `done`
 | 3   | Design system and iOS HIG foundation   | done        | Tokens, primitives, motion, haptics, sound; showcase at /style          |
 | 4   | Theme engine and presets               | done        | Presets drive CSS variables from shop data                              |
 | 5   | Internationalization foundation        | done        | en and ne locales, typed dictionaries, language toggle                  |
-| 6   | Scheduling engine                      | not-started | Pure module plus exhaustive Vitest suite                                |
+| 6   | Scheduling engine                      | done        | Pure module, 48 tests over the spec 74 matrix; zone safe via @date-fns/tz |
 | 7   | Booking pipeline                       | not-started | Transactional actions, conflict recovery, rate limits                   |
 | 8   | Public customer experience             | not-started | Landing, services, barbers, booking flow, manage page                   |
 | 9   | Admin operations                       | not-started | Dashboard, calendar, appointment actions, customers                     |
@@ -121,13 +121,13 @@ Status values: `not-started`, `in-progress`, `done`
 
 ### Phase 6: Scheduling engine
 
-- [ ] types.ts, interval.ts math
-- [ ] hours.ts expansion with zone awareness
-- [ ] slots.ts generation with duration and buffer filtering
-- [ ] rules.ts notice and deadline checks
-- [ ] availability.ts composition API
-- [ ] Vitest matrix covering spec section 74 cases
-- [ ] Midnight boundary and DST-safe tests
+- [x] types.ts, interval.ts math
+- [x] hours.ts expansion with zone awareness
+- [x] slots.ts generation with duration and buffer filtering
+- [x] rules.ts notice and deadline checks
+- [x] availability.ts composition API
+- [x] Vitest matrix covering spec section 74 cases
+- [x] Midnight boundary and DST-safe tests
 
 ### Phase 7: Booking pipeline
 
@@ -239,10 +239,25 @@ Status values: `not-started`, `in-progress`, `done`
 | AD-11 | Edge proxy checks cookie presence only, real authorization server-side                                  | proxy.ts cannot query the database. requireUser/requireOwner enforce session and role on every admin page                                                                                                                     | 2026-08-23 |
 | AD-12 | Themes emit as inline CSS custom properties on html, consumed through semantic tokens                   | Inline beats stylesheet defaults with no cascade ordering games; unknown preset ids fall back to Classic Barbershop. connection() in the root layout keeps every route request-time so preset changes appear without rebuilds | 2026-08-23 |
 | AD-13 | Locale prefix routing via [locale] root segment; negotiation in proxy: cookie, Accept-Language, default | Crawlable localized URLs per AD-09. next/root-params exposes the locale to any Server Component without prop drilling. Auth redirects and admin gates stay locale aware                                                       | 2026-08-23 |
+| AD-14 | Slot grid spans raw working hours; blocked minutes render disabled with reasons instead of vanishing    | A greyed chip with BREAK/CLOSURE/BOOKED beats an unexplained hole. Footprint = duration + buffer must fit one contiguous free window; barber hours replace shop hours for that weekday; ranges are half open [start, end)      | 2026-08-24 |
 
 ---
 
 ## Changelog
+
+### 2026-08-24 (session 11)
+
+- Phase 6 scheduling engine complete in src/lib/scheduling (pure functions, no DB, no UI):
+  - interval.ts: half-open [start, end) range math: overlaps, merge, subtract, containment
+  - format.ts: dateKey/wallTime helpers built on TZDate from @date-fns/tz so every wall clock string is interpreted in the shop zone (Kathmandu +05:45 verified)
+  - hours.ts: shop/barber window expansion (barber rows replace shop rows per weekday), recurring and one-off breaks, full and partial closures by scope, busy epoch projection onto day segments including midnight crossing tails
+  - slots.ts: grid starts aligned on a global interval grid across merged windows; footprint fit requires duration + trailing buffer inside ONE contiguous free window; blocker classification with closure over break over booked priority
+  - rules.ts: PAST / MIN_NOTICE / MAX_ADVANCE precedence with exact boundaries allowed, cancel and reschedule deadline checks
+  - availability.ts: getAvailability composition returning slots with per-slot eligible barberIds for ANY-barber booking plus barbersForExactSlot recheck hook that accepts extraBusy for the phase 7 transactional anti-double-booking check
+  - Design choice (AD-14): grid spans raw working hours so blocked minutes stay visible as disabled chips with reasons instead of unexplained holes
+- Tests: 48 new Vitest cases covering the spec section 74 matrix, spec closing-boundary example (17:30 cannot start a 45 minute service ending 18:00), buffer tails blocking later starts, multi-barber unions, ANY-barber filtering, midnight-crossing projection, cancelled appointments ignored, DST spring forward (identical wall times 47h apart), Kathmandu odd offset epochs
+- Caught by the suite along the way: freeWindowsForBarber silently dropped its busy argument under vitest's esbuild transform (no typecheck at test time) which erased all appointment blocking; fixed and covered
+- All checks green: format, lint, typecheck, 84 tests total, no app routes touched
 
 ### 2026-08-24 (session 10)
 
