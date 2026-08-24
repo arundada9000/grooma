@@ -5,7 +5,7 @@ Plan reference: `docs/IMPLEMENTATION_PLAN.md`
 
 Project: Grooma (barber appointment system)
 Started: 2026-08-23
-Last updated: 2026-08-24 (phase 11 complete: homepage content model)
+Last updated: 2026-08-24 (phase 12 complete: notifications)
 
 ---
 
@@ -37,7 +37,7 @@ Status values: `not-started`, `in-progress`, `done`
 | 9   | Admin operations                       | done        | Dashboard, calendar, appointment actions, customers                       |
 | 10  | Shop configuration admin               | done        | Services, barbers, schedules, breaks, closures, rules                     |
 | 11  | Theme and homepage customization admin | done        | Theme editor, homepage section editor                                     |
-| 12  | Notifications                          | not-started | In-app center, Resend email provider                                      |
+| 12  | Notifications                          | done        | Provider-independent service, inbox, Resend templates                     |
 | 13  | PWA                                    | not-started | Manifest, Serwist, offline shell, iOS meta                                |
 | 14  | SEO, AEO, GEO                          | not-started | Metadata, JSON-LD, hreflang, sitemap, robots                              |
 | 15  | Hardening, testing, performance polish | not-started | E2E suites, a11y audit, CWV                                               |
@@ -183,12 +183,12 @@ Status values: `not-started`, `in-progress`, `done`
 
 ### Phase 12: Notifications
 
-- [ ] NotificationService abstraction with provider registry
-- [ ] In-app notification center, unread badge, deep links, mark read
-- [ ] Resend email provider with branded templates
-- [ ] Lifecycle triggers: booked, confirmed, cancelled, rescheduled
-- [ ] Admin notifications on new booking and cancellations
-- [ ] Template locale resolution per recipient, shop default as fallback
+- [x] NotificationService abstraction with provider registry
+- [x] In-app notification center, unread badge, deep links, mark read
+- [x] Resend email provider with branded templates
+- [x] Lifecycle triggers: booked, confirmed, cancelled, rescheduled
+- [x] Admin notifications on new booking and cancellations
+- [x] Template locale resolution per recipient, shop default as fallback
 
 ### Phase 13: PWA
 
@@ -247,10 +247,22 @@ Status values: `not-started`, `in-progress`, `done`
 | AD-19 | Race test pins one barber instead of ANY                                                                                                                      | Two ANY racers can legitimately each win a different chair once one transaction's busy read lands after the other's commit; the exclusion constraint only arbitrates colliding ranges on the same barber                                                           | 2026-08-24 |
 | AD-20 | Staff reschedule skips customer notice rules on purpose; staff status changes follow a TRANSITIONS map                                                        | Owners move appointments freely (capacity probe plus exclusion constraint still arbitrate) while confirm/complete/noShow/cancel only apply from their legal source statuses, returning STATE_CONFLICT otherwise                                                    | 2026-08-24 |
 | AD-21 | Homepage content is a discriminated union of strict per-type Zod records; unknown keys stripped, caps enforced, blank localized fields collapse away on input | Storage stays forward compatible (older rows parse, new types default to empty content), the renderer can switch exhaustively per type, and editor drafts round trip through a laxer input schema whose output always satisfies the storage contract (unit tested) | 2026-08-24 |
+| AD-22 | Notification dispatch never throws; admin in-app rows only for booked/cancelled/rescheduled while every kind emails the customer when an address exists      | Booking mutations must not fail because a notification did; spec section 37 lists new/cancel/reschedule as owner-relevant and confirmations as customer-only. Console provider in dev, fetch-based Resend behind RESEND_API_KEY. MutationMeta mirrors AppointmentEventData so action call sites spread directly                                                                                                                              | 2026-08-24 |
 
 ---
 
 ## Changelog
+
+### 2026-08-24 (session 19)
+
+- Phase 12 notifications complete:
+  - src/lib/notifications: types.ts (AppointmentEventData, EmailMessage, EmailProvider contract), providers.ts (console provider logging info in dev; fetch-based Resend provider when RESEND_API_KEY set, throws on non-ok; channel resolved from env at call time with EMAIL_FROM default "Grooma <bookings@localhost>"), templates.ts (pure renderAppointmentEmail producing branded inline-styled HTML plus plain text, subject/intro/body rows through the dictionary email block, html escaping), service.ts (dispatchAppointmentEvent: admin fan-out to all shop owners for BOOKED/CANCELLED/RESCHEDULED via createAdminNotifications, email leg queued as QUEUED then finalized SENT/FAILED whenever customerEmail exists, never throws at call sites)
+  - Triggers wired into both pipelines: booking/actions.ts fires BOOKED/CANCELLED/RESCHEDULED with CUSTOMER actor after successful cores; admin/actions.ts fires CONFIRMED/CANCELLED/RESCHEDULED with STAFF actor, staff reschedule overrides snapshot startMs/endMs with the new range. MutationMeta added to booking results (service/barber names, startMs/endMs, priceCents, customer name/email) mirroring AppointmentEventData so call sites spread directly; findAppointmentByTokenHash now joins customers to feed it
+  - Admin inbox at /admin/notifications: server page listing latest 50 rows with type icon keys, payload-derived labels, unread dot, per-row forms marking read then deep-linking to the appointment detail; mark-all-read button when unread > 0; empty state. AdminNav items gained a badge slot (desktop count pill, mobile dot) fed by countUnreadNotifications in the admin layout; new Inbox tab between Customers and Settings
+  - Dictionaries en and ne: admin.nav.notifications, admin.notifications block ({name}/{service}/{via} interpolation, byStaff suffix), top-level email block (subjects and bodies for all four kinds)
+  - Tests: templates unit suite (rendering, interpolation, staff suffix, html-only escaping), providers unit suite (channel resolution matrix), integration suite against local Postgres proving real fan-out (owner row + SENT console-provider log for BOOKED, CONFIRMED skipping admin rows but logging email, null email adding zero log rows, read-state transitions including idempotent second mark, dispatch resolving undefined); barbers.name notNull caught by the suite along the way
+- Verified live: signed-in owner gets 200 on /en/admin/notifications and /ne/admin/notifications with localized Inbox label and empty state; anonymous redirects 307 to the localized sign-in preserving next
+- All checks green: format, lint, typecheck, 120 tests
 
 ### 2026-08-24 (session 18)
 

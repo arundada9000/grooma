@@ -185,11 +185,21 @@ export async function countActiveBookingsOnDay(
 
 export async function findAppointmentByTokenHash(tokenHash: string) {
   const [row] = await db
-    .select()
+    .select({
+      appointment: appointments,
+      customerName: customers.name,
+      customerEmail: customers.email,
+    })
     .from(appointments)
+    .innerJoin(customers, eq(customers.id, appointments.customerId))
     .where(eq(appointments.lookupTokenHash, tokenHash))
     .limit(1);
-  return row ?? null;
+  if (!row) return null;
+  return {
+    ...row.appointment,
+    customerName: row.customerName,
+    customerEmail: row.customerEmail,
+  };
 }
 
 export async function findShopById(shopId: string) {

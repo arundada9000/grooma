@@ -19,6 +19,7 @@ import {
 } from "./core";
 import type { BookingFailure, CreateBookingResult, LookupResult, MutationResult } from "./types";
 import type { Slot } from "@/lib/scheduling/types";
+import { notifyAppointmentEvent } from "@/lib/notifications/service";
 
 /**
  * Public booking server actions. Boundary contract (AD-08): validate,
@@ -59,7 +60,12 @@ export async function createBookingAction(raw: unknown): Promise<CreateBookingRe
   const parsed = createBookingSchema.safeParse(raw);
   if (!parsed.success) return invalid();
   const shop = await getShopContext();
-  return createBookingCore(shop, parsed.data);
+  const result = await createBookingCore(shop, parsed.data);
+  if (result.ok) {
+    // Dispatch never throws; a failed email leg cannot fail the booking.
+    await notifyAppointmentEvent({ kind: "BOOKED", actor: "CUSTOMER", ...result.meta });
+  }
+  return result;
 }
 
 export async function cancelBookingAction(raw: unknown): Promise<MutationResult> {
@@ -69,7 +75,16 @@ export async function cancelBookingAction(raw: unknown): Promise<MutationResult>
   const parsed = cancelBookingSchema.safeParse(raw);
   if (!parsed.success) return invalid();
   const shop = await getShopContext();
-  return cancelByCustomerCore(shop, parsed.data);
+  const result = await cancelByCustomerCore(shop, parsed.data);
+  if (result.ok) {
+    await notifyAppointmentEvent({
+      kind: "CANCELLED",
+      actor: "CUSTOMER",
+      cancelReason: parsed.data.reason ?? null,
+      ...result.meta,
+    });
+  }
+  return result;
 }
 
 export async function rescheduleBookingAction(raw: unknown): Promise<LookupResult> {
@@ -79,7 +94,11 @@ export async function rescheduleBookingAction(raw: unknown): Promise<LookupResul
   const parsed = rescheduleBookingSchema.safeParse(raw);
   if (!parsed.success) return invalid();
   const shop = await getShopContext();
-  return rescheduleByCustomerCore(shop, parsed.data);
+  const result = await rescheduleByCustomerCore(shop, parsed.data);
+  if (result.ok) {
+    await notifyAppointmentEvent({ kind: "RESCHEDULED", actor: "CUSTOMER", ...result.meta });
+  }
+  return result;
 }
 
 export async function lookupAppointmentAction(token: string): Promise<LookupResult> {

@@ -35,6 +35,7 @@ import type {
   BookingFailure,
   CreateBookingResult,
   LookupResult,
+  MutationMeta,
   MutationResult,
 } from "./types";
 
@@ -75,6 +76,29 @@ function toView(row: typeof appointments.$inferSelect): AppointmentView {
     priceCents: row.priceAtBookingCents,
     durationMinutes: row.durationAtBookingMinutes,
     customerNotes: row.customerNotes,
+  };
+}
+
+type AppointmentWithContact = typeof appointments.$inferSelect & {
+  customerName?: string;
+  customerEmail?: string | null;
+};
+
+/** Notification payload source; snapshot fields mirror the view. */
+function mutationMeta(
+  row: AppointmentWithContact,
+  contact: { customerName: string; customerEmail: string | null },
+): MutationMeta {
+  const view = toView(row);
+  return {
+    appointmentId: row.id,
+    customerName: contact.customerName ?? row.customerName ?? "",
+    customerEmail: contact.customerEmail ?? row.customerEmail ?? null,
+    serviceName: view.serviceName,
+    barberName: view.barberName,
+    startMs: view.startMs,
+    endMs: view.endMs,
+    priceCents: view.priceCents,
   };
 }
 
@@ -233,7 +257,15 @@ export async function createBookingCore(
       case "limit":
         return { ok: false, code: "MAX_DAILY_REACHED" };
       case "created":
-        return { ok: true, appointment: toView(outcome.row), lookupToken: outcome.lookupToken };
+        return {
+          ok: true,
+          appointment: toView(outcome.row),
+          lookupToken: outcome.lookupToken,
+          meta: mutationMeta(outcome.row, {
+            customerName: input.customer.name,
+            customerEmail: input.customer.email ?? null,
+          }),
+        };
     }
   } catch (error) {
     if (isExclusionViolation(error)) {
@@ -268,7 +300,10 @@ export async function cancelByCustomerCore(
     .update(appointments)
     .set({ status: "CANCELLED", cancelReason: input.reason ?? null, updatedAt: new Date() })
     .where(eq(appointments.id, appointment.id));
-  return { ok: true };
+  return {
+    ok: true,
+    meta: mutationMeta(appointment, appointment),
+  };
 }
 
 export async function rescheduleByCustomerCore(
@@ -337,7 +372,11 @@ export async function rescheduleByCustomerCore(
     if (outcome.kind === "conflict") {
       return exclusionFailure("The new time was just taken or cannot fit the service");
     }
-    return { ok: true, appointment: toView(outcome.row) };
+    return {
+      ok: true,
+      appointment: toView(outcome.row),
+      meta: mutationMeta(appointment, appointment),
+    };
   } catch (error) {
     if (isExclusionViolation(error)) {
       return exclusionFailure("Another booking won this slot");
@@ -351,7 +390,11 @@ export async function lookupAppointmentCore(shop: Shop, token: string): Promise<
   if (!appointment || appointment.shopId !== shop.id) {
     return { ok: false, code: "NOT_FOUND" };
   }
-  return { ok: true, appointment: toView(appointment) };
+  return {
+    ok: true,
+    appointment: toView(appointment),
+    meta: mutationMeta(appointment, appointment),
+  };
 }
 
 /**

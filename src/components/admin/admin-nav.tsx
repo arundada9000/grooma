@@ -9,6 +9,8 @@ import { cn } from "@/lib/cn";
 export interface AdminNavItem {
   href: string;
   label: string;
+  /** Optional unread counter rendered as an accent pill. */
+  badge?: number;
 }
 
 export function AdminNav({ items }: { items: AdminNavItem[] }) {
@@ -18,6 +20,18 @@ export function AdminNav({ items }: { items: AdminNavItem[] }) {
     if (href === pathname) return true;
     // The dashboard is the admin index; other tabs are subpaths.
     return href !== items[0]?.href && pathname.startsWith(href);
+  }
+
+  function Badge({ count }: { count: number }) {
+    if (count <= 0) return null;
+    return (
+      <span
+        aria-hidden="true"
+        className="bg-accent text-on-accent ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums"
+      >
+        {count > 9 ? "9+" : count}
+      </span>
+    );
   }
 
   return (
@@ -40,6 +54,7 @@ export function AdminNav({ items }: { items: AdminNavItem[] }) {
               )}
             >
               {item.label}
+              {item.badge ? <Badge count={item.badge} /> : null}
             </Link>
           ))}
         </div>
@@ -56,7 +71,7 @@ export function AdminNav({ items }: { items: AdminNavItem[] }) {
               href={item.href}
               aria-current={isActive(item.href) ? "page" : undefined}
               className={cn(
-                "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors",
+                "relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors",
                 isActive(item.href) ? "text-accent" : "text-label-secondary",
               )}
             >
@@ -67,6 +82,12 @@ export function AdminNav({ items }: { items: AdminNavItem[] }) {
                   isActive(item.href) ? "bg-accent" : "bg-transparent",
                 )}
               />
+              {item.badge && item.badge > 0 ? (
+                <span
+                  aria-hidden="true"
+                  className="bg-accent absolute top-1 right-1/2 size-1.5 translate-x-4 rounded-full"
+                />
+              ) : null}
               {item.label}
             </Link>
           ))}

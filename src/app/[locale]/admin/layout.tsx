@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { getLocale, getTranslator } from "@/i18n/server";
 import { requireOwner } from "@/lib/auth/session";
+import { countUnreadNotifications } from "@/db/repositories/notifications";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { SignOutButton } from "./sign-out-button";
 
@@ -14,9 +15,10 @@ export const metadata: Metadata = {
  * trust the session; the shop scope comes from the session user.
  */
 export default async function AdminLayout({ children }: { children: ReactNode }) {
-  await requireOwner();
+  const session = await requireOwner();
   const locale = await getLocale();
   const { t } = await getTranslator();
+  const unread = await countUnreadNotifications(session.user.id);
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -35,6 +37,11 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           { href: `/${locale}/admin`, label: t("admin.nav.dashboard") },
           { href: `/${locale}/admin/calendar`, label: t("admin.nav.calendar") },
           { href: `/${locale}/admin/customers`, label: t("admin.nav.customers") },
+          {
+            href: `/${locale}/admin/notifications`,
+            label: t("admin.nav.notifications"),
+            badge: unread,
+          },
           { href: `/${locale}/admin/settings`, label: t("admin.settings.title") },
         ]}
       />

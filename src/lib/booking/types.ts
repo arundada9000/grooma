@@ -42,9 +42,27 @@ export interface AppointmentView {
   customerNotes: string | null;
 }
 
-export type LookupResult = { ok: true; appointment: AppointmentView } | BookingFailure;
+export type LookupResult =
+  { ok: true; appointment: AppointmentView; meta: MutationMeta } | BookingFailure;
+
+/**
+ * Everything notification dispatch needs about the mutated appointment:
+ * identity plus the historical display snapshot. Field names line up
+ * with AppointmentEventData so call sites can spread it straight in.
+ */
+export interface MutationMeta {
+  appointmentId: string;
+  customerName: string;
+  customerEmail: string | null;
+  serviceName: import("@/i18n/localized-text").LocalizedText;
+  barberName: string;
+  startMs: number;
+  endMs: number;
+  priceCents: number;
+}
 
 export type CreateBookingResult =
-  { ok: true; appointment: AppointmentView; lookupToken: string } | BookingFailure;
+  | { ok: true; appointment: AppointmentView; lookupToken: string; meta: MutationMeta }
+  | BookingFailure;
 
-export type MutationResult = { ok: true } | BookingFailure;
+export type MutationResult = { ok: true; meta: MutationMeta } | BookingFailure;

@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { appointments } from "@/db/schema";
+import { appointments, customers } from "@/db/schema";
 import type { Appointment } from "@/db/schema";
 import { requireOwner } from "@/lib/auth/session";
 import { getShopContext } from "@/lib/tenant";
@@ -18,6 +18,7 @@ import {
   loadWorkingHours,
 } from "@/db/repositories/booking";
 import { barbersForExactSlot } from "@/lib/scheduling/availability";
+import { notifyAppointmentEvent } from "@/lib/notifications/service";
 
 /**
  * Staff appointment mutations. requireOwner is the boundary (AD-08):
@@ -47,11 +48,21 @@ const TARGET_STATUS = {
 
 async function loadOwnedAppointment(shopId: string, appointmentId: string) {
   const [row] = await db
-    .select()
+    .select({
+      appointment: appointments,
+      customerName: customers.name,
+      customerEmail: customers.email,
+    })
     .from(appointments)
+    .innerJoin(customers, eq(customers.id, appointments.customerId))
     .where(and(eq(appointments.shopId, shopId), eq(appointments.id, appointmentId)))
     .limit(1);
-  return row ?? null;
+  if (!row) return null;
+  return {
+    ...row.appointment,
+    customerName: row.customerName,
+    customerEmail: row.customerEmail,
+  };
 }
 
 export async function setAppointmentStatusAction(raw: unknown): Promise<AdminActionResult> {
@@ -82,7 +93,37 @@ export async function setAppointmentStatusAction(raw: unknown): Promise<AdminAct
       updatedAt: new Date(),
     })
     .where(eq(appointments.id, appointment.id));
+
+  if (action === "confirm") {
+    await notifyAppointmentEvent({
+      kind: "CONFIRMED",
+      actor: "STAFF",
+      ...appointmentMeta(appointment),
+    });
+  } else if (action === "cancel") {
+    await notifyAppointmentEvent({
+      kind: "CANCELLED",
+      actor: "STAFF",
+      cancelReason: parsed.data.reason ?? appointment.cancelReason ?? null,
+      ...appointmentMeta(appointment),
+    });
+  }
   return { ok: true };
+}
+
+/** Snapshot + contact projection feeding notification dispatch. */
+function appointmentMeta(appointment: Awaited<ReturnType<typeof loadOwnedAppointment>>) {
+  if (!appointment) throw new Error("unreachable");
+  return {
+    appointmentId: appointment.id,
+    customerName: appointment.customerName,
+    customerEmail: appointment.customerEmail,
+    serviceName: appointment.serviceNameSnapshot,
+    barberName: appointment.barberNameSnapshot,
+    startMs: appointment.startTime.getTime(),
+    endMs: appointment.endTime.getTime(),
+    priceCents: appointment.priceAtBookingCents,
+  };
 }
 
 export async function updateAdminNotesAction(raw: unknown): Promise<AdminActionResult> {
@@ -173,6 +214,13 @@ export async function rescheduleByStaffAction(raw: unknown): Promise<AdminAction
         .update(appointments)
         .set({ startTime: new Date(startMs), endTime: new Date(endMs), updatedAt: new Date() })
         .where(eq(appointments.id, appointment.id));
+    });
+    await notifyAppointmentEvent({
+      kind: "RESCHEDULED",
+      actor: "STAFF",
+      ...appointmentMeta(appointment),
+      startMs,
+      endMs,
     });
     return { ok: true };
   } catch (error) {
