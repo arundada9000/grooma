@@ -28,6 +28,7 @@ import {
 export const metadata: Metadata = {
   title: "Style",
   description: "Grooma design system reference.",
+  robots: { index: false, follow: false },
 };
 
 function Section({

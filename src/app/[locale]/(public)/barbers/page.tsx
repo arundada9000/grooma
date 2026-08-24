@@ -4,10 +4,19 @@ import { getLocale, getTranslator } from "@/i18n/server";
 import { resolveLocalizedText } from "@/i18n/localized-text";
 import { getShopContext } from "@/lib/tenant";
 import { getActiveBarbers } from "@/db/repositories/public";
+import { breadcrumbJsonLd, buildPageMetadata, personItemListJsonLd } from "@/lib/seo/profile";
+import { getSiteUrl } from "@/lib/seo/site-url";
+import { JsonLd } from "@/components/seo/json-ld";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getTranslator();
-  return { title: t("barbersPage.title") };
+  const [shop, locale, { t }] = await Promise.all([getShopContext(), getLocale(), getTranslator()]);
+  return buildPageMetadata({
+    shopName: shop.name,
+    tagline: shop.tagline,
+    locale,
+    path: "/barbers",
+    title: `${t("barbersPage.title")} — ${shop.name}`,
+  });
 }
 
 export default async function BarbersPage() {
@@ -18,6 +27,13 @@ export default async function BarbersPage() {
 
   return (
     <div className="px-4 py-8">
+      <JsonLd data={personItemListJsonLd(barbers, { locale })} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: shop.name, url: `${getSiteUrl()}/${locale}` },
+          { name: t("barbersPage.title"), url: `${getSiteUrl()}/${locale}/barbers` },
+        ])}
+      />
       <header className="mb-6">
         <h1 className="text-label text-[32px] font-semibold tracking-tight">
           {t("barbersPage.title")}

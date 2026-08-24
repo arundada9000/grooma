@@ -17,6 +17,7 @@ import { LocaleProvider } from "@/i18n/client";
 import { getLocale, getTranslator } from "@/i18n/server";
 import { isLocale } from "@/i18n/config";
 import { SCHEME_SCRIPT } from "@/lib/scheme-script";
+import { getSiteUrl } from "@/lib/seo/site-url";
 import { notFound } from "next/navigation";
 import "../globals.css";
 
@@ -54,6 +55,8 @@ const playfair = Playfair_Display({
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getTranslator();
   return {
+    // Anchors every relative OG/canonical URL Next resolves.
+    metadataBase: new URL(getSiteUrl()),
     title: {
       default: t("meta.titleDefault"),
       template: t("meta.titleTemplate"),

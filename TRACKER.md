@@ -5,7 +5,7 @@ Plan reference: `docs/IMPLEMENTATION_PLAN.md`
 
 Project: Grooma (barber appointment system)
 Started: 2026-08-23
-Last updated: 2026-08-24 (phase 13 complete: PWA)
+Last updated: 2026-08-24 (phase 14 complete: SEO, AEO, GEO)
 
 ---
 
@@ -201,12 +201,12 @@ Status values: `not-started`, `in-progress`, `done`
 
 ### Phase 14: SEO, AEO, GEO
 
-- [ ] Per-shop metadata generation
-- [ ] Open Graph and Twitter cards
-- [ ] Canonical URLs, sitemap.ts covering both locales, robots.ts
-- [ ] hreflang alternates for en and ne
-- [ ] JSON-LD: HairSalon or LocalBusiness, Service, Person, BreadcrumbList, FAQPage
-- [ ] FAQ answer content support in both languages
+- [x] Per-shop metadata generation
+- [x] Open Graph and Twitter cards
+- [x] Canonical URLs, sitemap.ts covering both locales, robots.ts
+- [x] hreflang alternates for en and ne
+- [x] JSON-LD: HairSalon or LocalBusiness, Service, Person, BreadcrumbList, FAQPage
+- [x] FAQ answer content support in both languages
 
 ### Phase 15: Hardening, testing, performance polish
 
@@ -247,12 +247,25 @@ Status values: `not-started`, `in-progress`, `done`
 | AD-19 | Race test pins one barber instead of ANY                                                                                                                      | Two ANY racers can legitimately each win a different chair once one transaction's busy read lands after the other's commit; the exclusion constraint only arbitrates colliding ranges on the same barber                                                                                                        | 2026-08-24 |
 | AD-20 | Staff reschedule skips customer notice rules on purpose; staff status changes follow a TRANSITIONS map                                                        | Owners move appointments freely (capacity probe plus exclusion constraint still arbitrate) while confirm/complete/noShow/cancel only apply from their legal source statuses, returning STATE_CONFLICT otherwise                                                                                                 | 2026-08-24 |
 | AD-21 | Homepage content is a discriminated union of strict per-type Zod records; unknown keys stripped, caps enforced, blank localized fields collapse away on input | Storage stays forward compatible (older rows parse, new types default to empty content), the renderer can switch exhaustively per type, and editor drafts round trip through a laxer input schema whose output always satisfies the storage contract (unit tested)                                              | 2026-08-24 |
-| AD-22 | Notification dispatch never throws; admin in-app rows only for booked/cancelled/rescheduled while every kind emails the customer when an address exists      | Booking mutations must not fail because a notification did; spec section 37 lists new/cancel/reschedule as owner-relevant and confirmations as customer-only. Console provider in dev, fetch-based Resend behind RESEND_API_KEY. MutationMeta mirrors AppointmentEventData so action call sites spread directly                                                                                                                              | 2026-08-24 |
-| AD-23 | Hand-rolled public/sw.js instead of Serwist; navigations network-first with offline shell fallback, static assets cache-first, everything else untouched      | Next 16 builds run on Turbopack by default while @serwist/next is webpack-only; the plan names a minimal custom SW as the sanctioned fallback. Registering only in production keeps HMR clean. RSC payloads and non-GET requests are never intercepted, and the worker can never fake a booking success                                                                                        | 2026-08-24 |
+| AD-22 | Notification dispatch never throws; admin in-app rows only for booked/cancelled/rescheduled while every kind emails the customer when an address exists       | Booking mutations must not fail because a notification did; spec section 37 lists new/cancel/reschedule as owner-relevant and confirmations as customer-only. Console provider in dev, fetch-based Resend behind RESEND_API_KEY. MutationMeta mirrors AppointmentEventData so action call sites spread directly | 2026-08-24 |
+| AD-23 | Hand-rolled public/sw.js instead of Serwist; navigations network-first with offline shell fallback, static assets cache-first, everything else untouched      | Next 16 builds run on Turbopack by default while @serwist/next is webpack-only; the plan names a minimal custom SW as the sanctioned fallback. Registering only in production keeps HMR clean. RSC payloads and non-GET requests are never intercepted, and the worker can never fake a booking success         | 2026-08-24 |
+| AD-24 | Every SEO artifact derives from live shop rows; the only configurable constant is NEXT_PUBLIC_SITE_URL in src/lib/seo/site-url.ts                             | Owner asked for "easy to change later, like details of shop". Metadata, OG image, sitemap, JSON-LD all read getShopContext at request time — editing name/tagline/hours/services/FAQ in admin settings updates search results without a deploy. One env var to set when the production domain exists | 2026-08-24 |
 
 ---
 
 ## Changelog
+
+### 2026-08-24 (session 21)
+
+- Phase 14 SEO/AEO/GEO complete (AD-24: everything derives from live shop rows, one env constant for the site URL):
+  - src/lib/seo/site-url.ts — getSiteUrl() reads NEXT_PUBLIC_SITE_URL (localhost fallback), documented in .env.example; the single knob for canonical origin
+  - src/lib/seo/profile.ts pure builders, unit tested (7 cases): buildPageMetadata (canonical + hreflang languages + openGraph url/siteName/locale INTL_LOCALES + twitter summary_large_image + opt-in noindex), localBusinessJsonLd (@type HairSalon; PostalAddress/GeoCoordinates/hasMap/sameAs only when present in shop.location/contact/social; priceRange = currency; openingHoursSpecification flattened per interval from barberId-null working_hours rows), serviceItemListJsonLd (price from cents), personItemListJsonLd, breadcrumbJsonLd, faqJsonLd (from homepage faq section content.items)
+  - src/components/seo/json-ld.tsx renders script tags with "<" escaped to \u003c
+  - src/app/sitemap.ts covers / /services /barbers /book x en/ne via alternates.languages under the site URL; src/app/robots.ts allows all except /api/, /*/manage(, /) and /admin and references the sitemap
+  - src/app/[locale]/(public)/opengraph-image.tsx: ImageResponse 1200x630 branded card (pole stripes, palette gradient, shop name + tagline, Latin copy since next/og's bundled font is Latin-only); Next serves it at a hashed URL auto-referenced by og:image/twitter meta
+  - Page wiring: home generateMetadata + LocalBusiness JSON-LD (shop-scope hours) + FAQPage when a faq section is enabled; services/barbers get titled metadata + ItemList + BreadcrumbList; book upgraded to buildPageMetadata("/book"); manage entry, manage/[token] and style emit robots noindex (token URLs are private)
+- Verified live: robots.txt rules + sitemap reference correct; sitemap.xml lists 4 paths with per-locale alternates; home/services/barbers carry canonical + hrefLang alternates + expected JSON-LD blocks in both locales (HairSalon, FAQPage, ItemList Service/Person, BreadcrumbList); OG image route 200 image/png 111733 bytes with valid PNG magic; manage page emits noindex meta
+- All checks green: format, lint, typecheck, 131 tests
 
 ### 2026-08-24 (session 20)
 

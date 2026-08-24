@@ -4,7 +4,11 @@ import { ManageTokenForm } from "@/components/manage/manage-token-form";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getTranslator();
-  return { title: t("manage.title") };
+  return {
+    title: t("manage.title"),
+    // Token entry is a utility surface, not content for search results.
+    robots: { index: false, follow: false },
+  };
 }
 
 export default async function ManageEntryPage() {

@@ -16,7 +16,11 @@ const MAX_PICKER_DAYS = 56;
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getTranslator();
-  return { title: t("manage.title") };
+  return {
+    title: t("manage.title"),
+    // Token URLs are private; they must never be indexed or archived.
+    robots: { index: false, follow: false },
+  };
 }
 
 export default async function ManageAppointmentPage({

@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import { getLocale, getTranslator } from "@/i18n/server";
 import type { Locale } from "@/i18n/config";
 import { getShopContext } from "@/lib/tenant";
 import { getActiveBarbers, getActiveServices } from "@/db/repositories/public";
 import { loadWorkingHours } from "@/db/repositories/booking";
+import { buildPageMetadata, faqJsonLd, localBusinessJsonLd } from "@/lib/seo/profile";
+import { getSiteUrl } from "@/lib/seo/site-url";
+import { JsonLd } from "@/components/seo/json-ld";
 import type { HomepageSection } from "@/lib/validation/shop-config";
 import {
   AboutSection,
@@ -20,6 +24,17 @@ import {
   WhyUsSection,
 } from "@/components/home/sections";
 
+export async function generateMetadata(): Promise<Metadata> {
+  const [shop, locale, { t }] = await Promise.all([getShopContext(), getLocale(), getTranslator()]);
+  return buildPageMetadata({
+    shopName: shop.name,
+    tagline: shop.tagline,
+    locale,
+    path: "/",
+    title: t("meta.titleDefault"),
+  });
+}
+
 export default async function HomePage() {
   const shop = await getShopContext();
   const locale = await getLocale();
@@ -36,9 +51,26 @@ export default async function HomePage() {
   const barbersHref = `/${locale}/barbers`;
 
   const enabled = shop.homepage.sections.filter((section) => section.enabled);
+  const faqItems = enabled.find((section) => section.type === "faq")?.content.items ?? [];
 
   return (
     <div className="pb-4">
+      <JsonLd
+        data={localBusinessJsonLd(
+          {
+            name: shop.name,
+            tagline: shop.tagline,
+            description: shop.description,
+            contact: shop.contact,
+            location: shop.location,
+            social: shop.social,
+            currency: shop.currency,
+          },
+          hours.filter((row) => row.barberId == null),
+          { siteUrl: getSiteUrl(), locale },
+        )}
+      />
+      {faqItems.length > 0 ? <JsonLd data={faqJsonLd(faqItems, locale)} /> : null}
       {enabled.map((section, index) => (
         <HomepageSectionRenderer
           key={`${section.type}-${index}`}

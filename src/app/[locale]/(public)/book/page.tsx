@@ -4,6 +4,7 @@ import { getLocale, getTranslator } from "@/i18n/server";
 import { resolveLocalizedText } from "@/i18n/localized-text";
 import type { Locale } from "@/i18n/config";
 import { getShopContext } from "@/lib/tenant";
+import { buildPageMetadata } from "@/lib/seo/profile";
 import { getActiveServices, getBarbersPerService } from "@/db/repositories/public";
 import {
   BookingWizard,
@@ -17,8 +18,14 @@ const MAX_PICKER_DAYS = 56;
 const CHUNK_DAYS = 7;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getTranslator();
-  return { title: t("book.title") };
+  const [shop, locale, { t }] = await Promise.all([getShopContext(), getLocale(), getTranslator()]);
+  return buildPageMetadata({
+    shopName: shop.name,
+    tagline: shop.tagline,
+    locale,
+    path: "/book",
+    title: `${t("book.title")} — ${shop.name}`,
+  });
 }
 
 export default async function BookPage({
